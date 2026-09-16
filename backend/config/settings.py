@@ -147,6 +147,10 @@ EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = True
+# Bound SMTP connection attempts so an unavailable mail server cannot hold a
+# Gunicorn worker until Render kills the request. Email is best-effort and
+# checkout must remain successful when SMTP is unavailable.
+EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "5"))
 
 BKASH_NUMBER = os.environ.get("BKASH_NUMBER", "01XXXXXXXXX")
 
