@@ -1,62 +1,17 @@
 // cart.js — works for both logged-in users (server cart via /cart/) and
-// guests (localStorage guest cart, see api.js). Checkout still requires
-// login — a guest's "Proceed to checkout" goes to login.html?next=checkout.html
+// guests (localStorage guest cart). Checkout still requires login — a
+// guest's "Proceed to checkout" goes to login.html?next=checkout.html
 // instead, and mergeGuestCartIntoServerCart() runs right after login/signup.
 document.addEventListener("DOMContentLoaded", loadCart);
 
 async function loadCart() {
   const el = document.getElementById("cartContainer");
-  if (isLoggedIn()) {
-    await loadServerCart(el);
-  } else {
-    await loadGuestCartView(el);
-  }
-}
-
-async function loadServerCart(el) {
   try {
-    const items = await api.get("/cart/");
-    renderCart(el, items, false);
+    const { items, isGuest } = await getUnifiedCartItems();
+    renderCart(el, items, isGuest);
   } catch {
     el.innerHTML = `<p class="error">Could not load your cart.</p>`;
   }
-}
-
-async function loadGuestCartView(el) {
-  const guestItems = getGuestCart();
-  if (guestItems.length === 0) {
-    renderCart(el, [], true);
-    return;
-  }
-
-  // Fetch each product fresh (public endpoint, no auth needed) so price,
-  // image, and current stock stay accurate rather than a stale snapshot.
-  const results = await Promise.allSettled(
-    guestItems.map(async (gi) => ({ gi, product: await api.get(`/products/${gi.product_id}/`) }))
-  );
-
-  const items = [];
-  const stillValid = [];
-  results.forEach((r, idx) => {
-    if (r.status === "fulfilled") {
-      const { gi, product: p } = r.value;
-      items.push({
-        id: `${gi.product_id}-${gi.size}`,
-        product_id: gi.product_id,
-        product_name: p.name,
-        product_price: p.price,
-        product_image: p.image_main,
-        size: gi.size,
-        quantity: gi.quantity,
-      });
-      stillValid.push(guestItems[idx]);
-    }
-    // rejected = product no longer exists; drop it from the guest cart below
-  });
-
-  if (stillValid.length !== guestItems.length) saveGuestCart(stillValid);
-
-  renderCart(el, items, true);
 }
 
 function renderCart(el, items, isGuest) {
@@ -94,7 +49,7 @@ function renderCart(el, items, isGuest) {
               <small>Size ${i.size} &middot; Qty ${i.quantity}</small>
             </div>
             <div class="cart-item-actions">
-              <button class="cart-remove-link removeBtn" data-id="${i.id}" data-product-id="${i.product_id}" data-size="${i.size}">Remove</button>
+              <button class="cart-remove-link removeBtn" data-id="${i.id}" data-product-id="${i.product_id}" data-size="${i.size}" data-name="${i.product_name}">Remove</button>
             </div>
           </div>
         `
@@ -120,16 +75,22 @@ function renderCart(el, items, isGuest) {
   `;
 
   el.querySelectorAll(".removeBtn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      if (isGuest) {
-        removeFromGuestCart(Number(btn.dataset.productId), Number(btn.dataset.size));
-        loadCart();
-        renderNav();
-      } else {
-        await api.del(`/cart/${btn.dataset.id}/`);
-        loadCart();
-        renderNav();
-      }
+    btn.addEventListener("click", () => {
+      openConfirmModal({
+        title: "Remove item?",
+        message: `Remove ${btn.dataset.name} from your cart?`,
+        confirmLabel: "Remove",
+        danger: true,
+        onConfirm: async () => {
+          if (isGuest) {
+            removeFromGuestCart(Number(btn.dataset.productId), Number(btn.dataset.size));
+          } else {
+            await api.del(`/cart/${btn.dataset.id}/`);
+          }
+          loadCart();
+          renderNav();
+        },
+      });
     });
   });
 }

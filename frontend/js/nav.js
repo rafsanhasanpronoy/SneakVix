@@ -63,7 +63,12 @@ function renderNav() {
           <button id="themeToggle" class="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
             ${SUN_ICON}${MOON_ICON}
           </button>
-          <a href="${base}cart.html" class="nav-signin" id="cartCountLink">Cart (0)</a>
+          <div class="cart-dropdown-wrap" id="cartDropdownWrap">
+            <a href="${base}cart.html" class="nav-signin" id="cartCountLink">Cart (0)</a>
+            <div class="cart-dropdown glass-panel" id="cartDropdown">
+              <p class="cart-dropdown-empty">Loading...</p>
+            </div>
+          </div>
           ${
             user
               ? `
@@ -92,7 +97,70 @@ function renderNav() {
     window.location.href = `${base}products.html${q ? `?search=${encodeURIComponent(q)}` : ""}`;
   });
 
+  document.getElementById("cartDropdownWrap").addEventListener("mouseenter", renderCartDropdown);
+
   updateCartCount();
+}
+
+async function renderCartDropdown() {
+  const el = document.getElementById("cartDropdown");
+  try {
+    const { items } = await getUnifiedCartItems();
+
+    if (items.length === 0) {
+      el.innerHTML = `
+        <p class="cart-dropdown-title">Your Cart</p>
+        <p class="cart-dropdown-empty">Your cart is empty.</p>
+      `;
+      return;
+    }
+
+    const subtotal = items.reduce((sum, i) => sum + Number(i.product_price) * i.quantity, 0);
+    const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
+    const base = window.location.pathname.includes("/admin/") ? "../" : "";
+
+    el.innerHTML = `
+      <p class="cart-dropdown-title">Your Cart (${totalQty})</p>
+      ${items
+        .map(
+          (i) => `
+        <div class="cart-dropdown-row">
+          <img src="${mediaUrl(i.product_image)}" alt="${i.product_name}" />
+          <div class="cart-dropdown-info">
+            <h5>${i.product_name}</h5>
+            <small>Size ${i.size} &middot; Qty ${i.quantity}</small>
+          </div>
+          <span class="cart-dropdown-price">${formatPrice(i.product_price * i.quantity)}</span>
+          <button class="cart-dropdown-remove" data-id="${i.id}" data-product-id="${i.product_id}" data-size="${i.size}" aria-label="Remove">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      `
+        )
+        .join("")}
+      <div class="cart-dropdown-footer">
+        <div class="cart-dropdown-subtotal"><span>Subtotal</span><span>${formatPrice(subtotal)}</span></div>
+        <div class="cart-dropdown-actions">
+          <a href="${base}cart.html" class="view-cart">View Cart</a>
+          <a href="${base}${isLoggedIn() ? "checkout.html" : "login.html?next=checkout.html"}" class="checkout-link">Checkout</a>
+        </div>
+      </div>
+    `;
+
+    el.querySelectorAll(".cart-dropdown-remove").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (isLoggedIn()) {
+          await api.del(`/cart/${btn.dataset.id}/`);
+        } else {
+          removeFromGuestCart(Number(btn.dataset.productId), Number(btn.dataset.size));
+        }
+        renderCartDropdown();
+        updateCartCount();
+      });
+    });
+  } catch {
+    el.innerHTML = `<p class="cart-dropdown-empty">Could not load your cart.</p>`;
+  }
 }
 
 async function updateCartCount() {

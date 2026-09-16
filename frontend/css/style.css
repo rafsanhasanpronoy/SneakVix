@@ -1339,3 +1339,70 @@ input:focus {
 
 .size-picker-row.is-out-of-stock { opacity: 0.5; }
 .size-picker-stock.out { color: var(--danger); }
+
+/* ==================== GLASSMORPHISM: shared panel ==================== */
+.glass-panel {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: var(--border-radius);
+    box-shadow: 0 16px 44px rgba(0,0,0,0.4);
+}
+.light-mode .glass-panel {
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 16px 44px rgba(0,0,0,0.12);
+}
+
+/* ==================== MODAL (glass, blurred overlay) ==================== */
+.modal-overlay {
+    position: fixed; inset: 0; z-index: 3000;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+    padding: 1.2rem;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-box {
+    width: 100%; max-width: 420px; padding: 1.8rem;
+    transform: scale(0.94); transition: transform 0.25s ease;
+    color: var(--text);
+}
+.modal-overlay.open .modal-box { transform: scale(1); }
+.modal-title { margin: 0 0 0.6rem; font-size: 1.25rem; }
+.modal-message { margin: 0 0 1.5rem; color: var(--text-light); font-size: 0.92rem; line-height: 1.5; }
+.modal-actions { display: flex; gap: 0.7rem; justify-content: flex-end; }
+
+/* ==================== HEADER MINI-CART DROPDOWN ==================== */
+.cart-dropdown-wrap { position: relative; display: inline-flex; }
+.cart-dropdown {
+    position: absolute; top: calc(100% + 16px); right: -12px;
+    width: 340px; max-height: 440px; overflow-y: auto;
+    padding: 1.2rem;
+    opacity: 0; visibility: hidden; transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    z-index: 1500;
+}
+.cart-dropdown-wrap:hover .cart-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+.cart-dropdown-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-light); margin-bottom: 0.9rem; }
+.cart-dropdown-empty { text-align: center; color: var(--text-light); font-size: 0.88rem; padding: 1.5rem 0; }
+.cart-dropdown-row { display: flex; gap: 0.7rem; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(128,128,128,0.15); }
+.cart-dropdown-row:last-of-type { border-bottom: none; }
+.cart-dropdown-row img { width: 46px; height: 46px; object-fit: contain; background: var(--img-bg); border-radius: 6px; padding: 4px; flex-shrink: 0; }
+.cart-dropdown-info { flex: 1; min-width: 0; }
+.cart-dropdown-info h5 { margin: 0 0 2px; font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cart-dropdown-info small { color: var(--text-light); font-size: 0.75rem; }
+.cart-dropdown-price { font-size: 0.82rem; font-weight: 700; color: var(--primary); flex-shrink: 0; }
+.cart-dropdown-remove { background: none; border: none; color: var(--text-light); cursor: pointer; padding: 4px; flex-shrink: 0; transition: var(--transition); }
+.cart-dropdown-remove:hover { color: var(--danger); }
+.cart-dropdown-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(128,128,128,0.15); }
+.cart-dropdown-subtotal { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 0.9rem; }
+.cart-dropdown-actions { display: flex; gap: 0.6rem; }
+.cart-dropdown-actions a { flex: 1; text-align: center; padding: 0.6rem; border-radius: 8px; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: var(--transition); }
+.cart-dropdown-actions .view-cart { border: 1px solid var(--card-border); color: var(--text); }
+.cart-dropdown-actions .view-cart:hover { border-color: var(--primary); color: var(--primary); }
+.cart-dropdown-actions .checkout-link { background: var(--primary); color: var(--on-primary); }
+.cart-dropdown-actions .checkout-link:hover { background: var(--primary-dark); }

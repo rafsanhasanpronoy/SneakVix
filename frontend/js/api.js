@@ -1,5 +1,13 @@
 // api.js — shared across every page. Talks to the Django backend with plain fetch().
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = (() => {
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") {
+    return "http://localhost:8000/api";
+  }
+  // Set this to your deployed Django backend's real URL once it's live —
+  // see the deployment steps. Everything else in this file is unaffected.
+  return "https://YOUR-BACKEND-DOMAIN.onrender.com/api";
+})();
 
 async function apiRequest(path, { method = "GET", body, auth = true, isForm = false } = {}) {
   const headers = {};
@@ -171,7 +179,81 @@ async function mergeGuestCartIntoServerCart() {
   clearGuestCart();
 }
 
-// ---------------- Quick-add from a product card ----------------
+// Unified cart fetch — works for both logged-in (server /cart/) and guest
+// (localStorage) shoppers, returning the same shape either way. Used by
+// both cart.js and the header mini-cart dropdown so they never drift.
+async function getUnifiedCartItems() {
+  if (isLoggedIn()) {
+    const items = await api.get("/cart/"); // let caller catch failures
+    return { items, isGuest: false };
+  }
+
+  const guestItems = getGuestCart();
+  if (guestItems.length === 0) return { items: [], isGuest: true };
+
+  const results = await Promise.allSettled(
+    guestItems.map(async (gi) => ({ gi, product: await api.get(`/products/${gi.product_id}/`) }))
+  );
+
+  const items = [];
+  const stillValid = [];
+  results.forEach((r, idx) => {
+    if (r.status === "fulfilled") {
+      const { gi, product: p } = r.value;
+      items.push({
+        id: `${gi.product_id}-${gi.size}`,
+        product_id: gi.product_id,
+        product_name: p.name,
+        product_price: p.price,
+        product_image: p.image_main,
+        size: gi.size,
+        quantity: gi.quantity,
+      });
+      stillValid.push(guestItems[idx]);
+    }
+    // rejected = product no longer exists; drop it from the guest cart
+  });
+  if (stillValid.length !== guestItems.length) saveGuestCart(stillValid);
+
+  return { items, isGuest: true };
+}
+
+// ---------------- Reusable glass modal (confirm-style) ----------------
+function openConfirmModal({ title, message, confirmLabel = "Confirm", danger = false, onConfirm }) {
+  closeModal(); // only one at a time
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "activeModal";
+  overlay.innerHTML = `
+    <div class="modal-box glass-panel">
+      <h3 class="modal-title">${title}</h3>
+      <p class="modal-message">${message}</p>
+      <div class="modal-actions">
+        <button type="button" class="btn-outline" id="modalCancelBtn">Cancel</button>
+        <button type="button" class="btn btn-primary" id="modalConfirmBtn" style="${danger ? "background:var(--danger);color:#fff;" : ""}">${confirmLabel}</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add("open"));
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  document.getElementById("modalCancelBtn").addEventListener("click", closeModal);
+  document.getElementById("modalConfirmBtn").addEventListener("click", () => {
+    closeModal();
+    onConfirm();
+  });
+}
+
+function closeModal() {
+  const overlay = document.getElementById("activeModal");
+  if (!overlay) return;
+  overlay.classList.remove("open");
+  setTimeout(() => overlay.remove(), 250);
+}
 // Delegated on document so it works for cards rendered by any page/script,
 // including ones injected after this file has already run.
 document.addEventListener("click", (e) => {
