@@ -138,18 +138,16 @@ IMAGE_SEARCH_FLASK_URL = os.environ.get(
     "http://localhost:5000/predict",
 )
 
-# Email is sent through Resend's HTTPS API by default when a Resend API key
-# is configured. This avoids SMTP port restrictions on Render Free services.
-EMAIL_BACKEND = os.environ.get(
-    "EMAIL_BACKEND",
-    "store.resend_backend.EmailBackend"
-    if os.environ.get("RESEND_API_KEY")
-    else "django.core.mail.backends.console.EmailBackend",
-)
+# Use the custom Resend HTTPS backend whenever RESEND_API_KEY is configured.
+# This avoids SMTP port restrictions on Render Free services.
+if os.environ.get("RESEND_API_KEY"):
+    EMAIL_BACKEND = "store.resend_backend.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "onboarding@resend.dev")
 
-# Kept for local/legacy SMTP compatibility; the Resend backend does not use
-# these settings.
+# Retained for local/legacy configuration; the Resend backend does not use them.
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
