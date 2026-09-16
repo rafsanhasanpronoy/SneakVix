@@ -138,19 +138,26 @@ IMAGE_SEARCH_FLASK_URL = os.environ.get(
     "http://localhost:5000/predict",
 )
 
+# Email is sent through Resend's HTTPS API by default when a Resend API key
+# is configured. This avoids SMTP port restrictions on Render Free services.
 EMAIL_BACKEND = os.environ.get(
     "EMAIL_BACKEND",
-    "django.core.mail.backends.console.EmailBackend",
+    "store.resend_backend.EmailBackend"
+    if os.environ.get("RESEND_API_KEY")
+    else "django.core.mail.backends.console.EmailBackend",
 )
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "onboarding@resend.dev")
+
+# Kept for local/legacy SMTP compatibility; the Resend backend does not use
+# these settings.
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
 EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = True
-# Bound SMTP connection attempts so an unavailable mail server cannot hold a
-# Gunicorn worker until Render kills the request. Email is best-effort and
-# checkout must remain successful when SMTP is unavailable.
 EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "5"))
+
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 
 BKASH_NUMBER = os.environ.get("BKASH_NUMBER", "01XXXXXXXXX")
 
