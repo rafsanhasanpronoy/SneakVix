@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters as drf_filters
 from rest_framework import generics, permissions, status, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,13 +23,38 @@ from .serializers import (
     ProductDetailSerializer, ProductListSerializer, SignupSerializer, UserSerializer,
 )
 
-DELIVERY_CHARGE = 100  # matches checkout.php
+DELIVERY_CHARGE = 100
 logger = logging.getLogger(__name__)
 
 
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.role == "admin")
+
+
+def validate_size_rows(rows):
+    if not isinstance(rows, list) or not rows:
+        raise ValidationError({"sizes": "At least one size is required."})
+
+    seen = set()
+    cleaned = []
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise ValidationError({"sizes": f"Size row {index + 1} is invalid."})
+        try:
+            size = int(row.get("size"))
+            stock = int(row.get("stock"))
+        except (TypeError, ValueError):
+            raise ValidationError({"sizes": f"Size row {index + 1} must contain numeric size and stock."})
+        if not 35 <= size <= 50:
+            raise ValidationError({"sizes": f"EU size must be between 35 and 50 (row {index + 1})."})
+        if stock < 0:
+            raise ValidationError({"sizes": f"Stock cannot be negative (row {index + 1})."})
+        if size in seen:
+            raise ValidationError({"sizes": f"Duplicate EU size {size} is not allowed."})
+        seen.add(size)
+        cleaned.append({"size": size, "stock": stock})
+    return cleaned
 
 
 # ---------- Auth ----------
@@ -42,14 +68,7 @@ class SignupView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
-        return Response(
-            {
-                "user": UserSerializer(user).data,
-                "access": str(refresh.access_token),
-                "refresh": str(refresh),
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        return Response({"user": UserSerializer(user).data, "access": str(refresh.access_token), "refresh": str(refresh)}, status=status.HTTP_201_CREATED)
 
 
 class MeView(APIView):
@@ -59,14 +78,7 @@ class MeView(APIView):
         return Response(UserSerializer(request.user).data)
 
 
-# login is handled by rest_framework_simplejwt.views.TokenObtainPairView in urls.py
-# (it already returns {"access": ..., "refresh": ...} given username/password)
-
-
-# ---------- Products (public read, admin write) ----------
-
 class ProductFilter(django_filters.FilterSet):
-    # ?brand=nike or ?brand=nike,adidas (comma-separated OR match)
     brand = django_filters.CharFilter(method="filter_brand")
     min_price = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     max_price = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
@@ -83,22 +95,13 @@ class ProductFilter(django_filters.FilterSet):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by("-created_at")
     filterset_class = ProductFilter
-    filter_backends = [
-        DjangoFilterBackend,
-        drf_filters.SearchFilter,
-        drf_filters.OrderingFilter,
-    ]
+    filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter, drf_filters.OrderingFilter]
     search_fields = ["name", "description"]
     ordering_fields = ["price", "created_at", "name"]
-    ordering = ["-created_at"]  # default when no ?ordering= is given
+    ordering = ["-created_at"]
 
     def get_serializer_class(self):
-        # Only the list/grid view needs the lighter payload — create, update,
-        # and retrieve all need the full field set (description, image2,
-        # image3), otherwise those fields silently get dropped on save.
-        if self.action == "list":
-            return ProductListSerializer
-        return ProductDetailSerializer
+        return ProductListSerializer if self.action == "list" else ProductDetailSerializer
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
@@ -107,19 +110,27 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
+        sizes = validate_size_rows(self.request.data.get("sizes"))
         product = serializer.save()
-        # expects request.data like {"sizes": [{"size": 42, "stock": 5}, ...]}
-        for row in self.request.data.get("sizes", []):
-            ProductSize.objects.create(product=product, size=row["size"], stock=row["stock"])
+        ProductSize.objects.bulk_create([ProductSize(product=product, **row) for row in sizes])
 
     @transaction.atomic
     def perform_update(self, serializer):
-        product = serializer.save()
         sizes = self.request.data.get("sizes")
+        product = serializer.save()
         if sizes is not None:
+            sizes = validate_size_rows(sizes)
             product.sizes.all().delete()
-            for row in sizes:
-                ProductSize.objects.create(product=product, size=row["size"], stock=row["stock"])
+            ProductSize.objects.bulk_create([ProductSize(product=product, **row) for row in sizes])
+
+    def destroy(self, request, *args, **kwargs):
+        product = self.get_object()
+        if OrderItem.objects.filter(product=product).exists():
+            return Response(
+                {"error": "This product cannot be deleted because it is referenced by an existing order."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 # ---------- Cart ----------
@@ -133,21 +144,21 @@ class CartViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         product_id = request.data.get("product_id")
-        size = int(request.data.get("size", 0))
+        try:
+            size = int(request.data.get("size", 0))
+        except (TypeError, ValueError):
+            return Response({"error": "Invalid size."}, status=400)
         product = get_object_or_404(Product, id=product_id)
-
         ps = ProductSize.objects.filter(product=product, size=size).first()
         if not ps or ps.stock < 1:
             return Response({"error": "Selected size is out of stock"}, status=400)
 
-        item, created = Cart.objects.get_or_create(
-            user=request.user, product=product, size=size,
-            defaults={"quantity": 1},
-        )
+        item, created = Cart.objects.get_or_create(user=request.user, product=product, size=size, defaults={"quantity": 1})
         if not created:
+            if item.quantity >= ps.stock:
+                return Response({"error": f"Only {ps.stock} item(s) available for size {size}."}, status=400)
             item.quantity += 1
-            item.save()
-
+            item.save(update_fields=["quantity"])
         return Response(CartItemSerializer(item).data, status=201)
 
 
@@ -157,38 +168,36 @@ class CheckoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        items = Cart.objects.filter(user=request.user).select_related("product")
-        if not items.exists():
-            return Response({"error": "Your cart is empty"}, status=400)
-
         serializer = CheckoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        # Keep the database transaction limited to the order creation work.
-        # Email delivery is external I/O and must never hold the DB transaction
-        # open or be able to roll back an otherwise valid order.
         with transaction.atomic():
+            items = list(Cart.objects.filter(user=request.user).select_related("product"))
+            if not items:
+                return Response({"error": "Your cart is empty"}, status=400)
+
             subtotal = sum(i.product.price * i.quantity for i in items)
             total = subtotal + DELIVERY_CHARGE
-
             order = Order.objects.create(user=request.user, total_amount=total, status="pending")
             OrderAddress.objects.create(order=order, **data)
 
             for i in items:
+                updated = ProductSize.objects.filter(
+                    product=i.product,
+                    size=i.size,
+                    stock__gte=i.quantity,
+                ).update(stock=F("stock") - i.quantity)
+                if updated != 1:
+                    raise ValidationError({"stock": f"Insufficient stock for {i.product.name}, size {i.size}."})
+
                 OrderItem.objects.create(
                     order=order, product=i.product, size=i.size,
                     quantity=i.quantity, unit_price=i.product.price,
                 )
-                # decrement stock atomically at the DB level, mirroring the PHP checkout flow
-                ProductSize.objects.filter(product=i.product, size=i.size).update(
-                    stock=F("stock") - i.quantity
-                )
 
-            items.delete()
+            Cart.objects.filter(user=request.user).delete()
 
-        # Email is deliberately best-effort. A missing/broken SMTP service must
-        # never turn a successful checkout into HTTP 500 after the order commits.
         email_sent = False
         try:
             email_sent = send_order_confirmation_email(order)
@@ -209,8 +218,6 @@ class OrderListView(generics.ListAPIView):
         return Order.objects.filter(user=self.request.user).order_by("-created_at")
 
 
-# ---------- Admin: orders ----------
-
 class AdminOrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all().order_by("-created_at")
     serializer_class = OrderSerializer
@@ -229,18 +236,15 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         if new_status not in valid:
             return Response({"error": "Invalid status"}, status=400)
         order.status = new_status
-        order.save()
-        send_order_status_email(order, new_status)
+        order.save(update_fields=["status", "updated_at"])
+        try:
+            send_order_status_email(order, new_status)
+        except Exception:
+            logger.exception("Order status email failed for order %s", order.id)
         return Response(OrderSerializer(order).data)
 
 
-# ---------- Admin: users ----------
-
 class AdminUserViewSet(viewsets.ModelViewSet):
-    """List/manage users. Admins can change a user's role or delete an
-    account, but can't create users here (signup already covers that) and
-    can't delete their own account through this panel."""
-
     queryset = get_user_model().objects.all().order_by("-date_joined")
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
@@ -254,7 +258,7 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             if new_role not in valid_roles:
                 return Response({"error": "Invalid role"}, status=400)
             user.role = new_role
-            user.save()
+            user.save(update_fields=["role"])
         return Response(UserSerializer(user).data)
 
     def destroy(self, request, *args, **kwargs):
@@ -263,8 +267,6 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             return Response({"error": "You can't delete your own account."}, status=400)
         return super().destroy(request, *args, **kwargs)
 
-
-# ---------- Reverse image search (proxies to the existing Flask/ResNet service) ----------
 
 class ImageSearchView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -284,10 +286,19 @@ class ImageSearchView(APIView):
                 timeout=30,
             )
             resp.raise_for_status()
-        except requests.RequestException as exc:
+            matches = resp.json()
+            if not isinstance(matches, dict) or not isinstance(matches.get("results", []), list):
+                raise ValueError("Invalid image-search response format")
+            product_ids = []
+            for match in matches["results"]:
+                if isinstance(match, dict) and match.get("product_id") is not None:
+                    try:
+                        product_ids.append(int(match["product_id"]))
+                    except (TypeError, ValueError):
+                        continue
+        except (requests.RequestException, ValueError) as exc:
+            logger.exception("Image search failed")
             return Response({"error": f"Image search service unavailable: {exc}"}, status=502)
 
-        matches = resp.json()  # expects the Flask service to return product IDs/scores
-        product_ids = [m["product_id"] for m in matches.get("results", [])]
         products = Product.objects.filter(id__in=product_ids)
         return Response(ProductListSerializer(products, many=True).data)
