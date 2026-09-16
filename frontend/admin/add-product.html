@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Add Product - SneakVix Admin</title>
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <aside id="adminSidebar" class="admin-sidebar"></aside>
+    <main class="admin-main">
+      <div style="max-width:780px;">
+
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px;">
+          <a href="products.html" class="btn-ghost" style="width:32px;height:32px;padding:0;justify-content:center;">
+            <svg width="13" height="13" fill="none" stroke="#888" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          </a>
+          <h1 class="admin-h1" style="margin:0;">Add New Product</h1>
+        </div>
+
+        <div id="alertBox" style="margin-bottom:18px;"></div>
+
+        <form id="productForm">
+          <div style="display:flex;flex-direction:column;gap:18px;">
+
+            <!-- Basic info -->
+            <div class="card">
+              <div class="card-header"><span class="card-header-label">Basic Information</span></div>
+              <div style="padding:20px;display:flex;flex-direction:column;gap:15px;">
+                <div>
+                  <label class="form-label">Product Name *</label>
+                  <input type="text" id="name" required class="form-input" placeholder="e.g. Air Jordan 1 Retro High OG" />
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+                  <div>
+                    <label class="form-label">Brand *</label>
+                    <select id="brand" required class="form-select">
+                      <option value="">Select brand</option>
+                      <option value="nike">Nike</option>
+                      <option value="adidas">Adidas</option>
+                      <option value="puma">Puma</option>
+                      <option value="new_balance">New Balance</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label">Price (BDT) *</label>
+                    <input type="number" id="price" step="0.01" min="1" required class="form-input mono-input" placeholder="0" />
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Description *</label>
+                  <textarea id="description" rows="4" required class="form-textarea" placeholder="Describe the product..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Images -->
+            <div class="card">
+              <div class="card-header"><span class="card-header-label">Product Images</span></div>
+              <div style="padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" id="imageSlots">
+                <!-- filled by JS: image_main (required), image2, image3 -->
+              </div>
+            </div>
+
+            <!-- Sizes & stock -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-header-label">Sizes &amp; Stock</span>
+                <span style="font-size:11px;color:#ccc;">EU sizes 35–50</span>
+              </div>
+              <div style="padding:20px;">
+                <div style="display:grid;grid-template-columns:90px 110px 1fr;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--admin-border-soft);">
+                  <span style="font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;color:#bbb;font-weight:700;">EU Size</span>
+                  <span style="font-size:10.5px;text-transform:uppercase;letter-spacing:0.07em;color:#bbb;font-weight:700;">Stock Qty</span>
+                  <span></span>
+                </div>
+                <div id="sizesContainer" style="display:flex;flex-direction:column;gap:7px;"></div>
+                <button type="button" id="addSizeBtn" class="add-size-btn">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                  Add Size
+                </button>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:10px;padding-bottom:6px;">
+              <button type="submit" class="btn-primary" id="submitBtn">Add Product</button>
+              <a href="products.html" class="btn-ghost">Cancel</a>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/admin-nav.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="../js/supabaseClient.js"></script>
+  <script src="../js/admin-product-form.js"></script>
+</body>
+</html>

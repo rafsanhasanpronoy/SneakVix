@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Orders - SneakVix Admin</title>
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <aside id="adminSidebar" class="admin-sidebar"></aside>
+    <main class="admin-main">
+      <div style="display:flex;flex-direction:column;gap:22px;">
+        <div>
+          <h1 class="admin-h1">Orders</h1>
+          <p class="admin-subtext" id="orderCount">Loading...</p>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
+          <input type="search" id="orderSearch" class="form-input" placeholder="Search customer, phone, city..." style="max-width:260px;" />
+          <select id="statusFilter" class="form-select" style="width:auto;">
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="paid">Paid</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <select id="orderSort" class="form-select" style="width:auto;">
+            <option value="-created_at">Newest first</option>
+            <option value="created_at">Oldest first</option>
+            <option value="-total_amount">Amount: High to Low</option>
+            <option value="total_amount">Amount: Low to High</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <div style="overflow-x:auto;">
+            <table class="data-table" style="min-width:820px;">
+              <thead>
+                <tr><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th><th>Update</th><th style="text-align:right;">Details</th></tr>
+              </thead>
+              <tbody id="orderRows">
+                <tr><td colspan="7" class="empty-row">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/admin-nav.js"></script>
+  <script src="../js/admin-orders.js"></script>
+</body>
+</html>

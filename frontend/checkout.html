@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    // Applied before first paint to avoid a flash of the wrong theme.
+    if (localStorage.getItem("sneakvix-theme") === "light") {
+      document.documentElement.classList.add("light-mode");
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Checkout - SneakVix</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="navbar"></div>
+  <div class="container">
+    <div id="checkoutIntro">
+      <h1 class="cart-page-title">Checkout</h1>
+      <p class="cart-page-subtitle">Enter your shipping details to complete your order.</p>
+    </div>
+
+    <div id="orderSuccess" style="display:none;"></div>
+
+    <div class="checkout-layout" id="checkoutLayout">
+      <form id="checkoutForm">
+        <div class="checkout-section">
+          <div class="checkout-section-title"><span class="step-badge">1</span> Shipping details</div>
+
+          <div class="co-group">
+            <label class="checkout-label" for="full_name">Full name</label>
+            <input class="checkout-input" id="full_name" name="full_name" placeholder="Full name" required minlength="3" />
+          </div>
+
+          <div class="form-row-2">
+            <div class="co-group">
+              <label class="checkout-label" for="phone">Phone</label>
+              <input class="checkout-input" id="phone" name="phone" placeholder="Phone" required />
+            </div>
+            <div class="co-group">
+              <label class="checkout-label" for="postal_code">Postal code</label>
+              <input class="checkout-input" id="postal_code" name="postal_code" placeholder="Optional" />
+            </div>
+          </div>
+
+          <div class="co-group">
+            <label class="checkout-label" for="address_line1">Address line 1</label>
+            <input class="checkout-input" id="address_line1" name="address_line1" placeholder="Address line 1" required minlength="5" />
+          </div>
+
+          <div class="co-group">
+            <label class="checkout-label" for="address_line2">Address line 2</label>
+            <input class="checkout-input" id="address_line2" name="address_line2" placeholder="Optional" />
+          </div>
+
+          <div class="co-group">
+            <label class="checkout-label" for="city">City</label>
+            <input class="checkout-input" id="city" name="city" placeholder="City" required />
+          </div>
+
+          <p id="error" class="error"></p>
+        </div>
+      </form>
+
+      <div class="order-summary-card">
+        <h3>Order Summary</h3>
+        <div id="summaryItems"></div>
+        <div id="totals"></div>
+        <button type="submit" form="checkoutForm" id="placeOrderBtn" class="btn-checkout">Place order</button>
+        <p class="cart-secure-note">Secure checkout</p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <h3>SneakVix</h3>
+        <p>Premium sneakers, curated drops, and a smarter way to find your next pair.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="products.html">All products</a></li>
+          <li><a href="products.html?brand=nike">Nike</a></li>
+          <li><a href="products.html?brand=adidas">Adidas</a></li>
+          <li><a href="image-search.html">Search by photo</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <ul>
+          <li><a href="profile.html">My account</a></li>
+          <li><a href="cart.html">Cart</a></li>
+          <li><a href="login.html">Log in</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">&copy; 2026 SneakVix. All rights reserved.</div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/checkout.js"></script>
+</body>
+</html>

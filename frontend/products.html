@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    // Applied before first paint to avoid a flash of the wrong theme.
+    if (localStorage.getItem("sneakvix-theme") === "light") {
+      document.documentElement.classList.add("light-mode");
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Products - SneakVix</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="navbar"></div>
+  <div class="container">
+    <h1>Shop</h1>
+
+    <div class="shop-toolbar">
+      <form class="shop-search" id="shopSearchForm">
+        <input type="search" id="shopSearchInput" placeholder="Search sneakers..." autocomplete="off" />
+        <button type="submit" aria-label="Search">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.3-4.3"/></svg>
+        </button>
+      </form>
+
+      <div class="shop-sort">
+        <label for="sortSelect">Sort by</label>
+        <select id="sortSelect">
+          <option value="-created_at">Newest</option>
+          <option value="price">Price: Low to High</option>
+          <option value="-price">Price: High to Low</option>
+          <option value="name">Name: A&ndash;Z</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="shop-layout">
+      <aside class="shop-filters">
+        <div class="filter-group">
+          <div class="filter-group-title">Brand</div>
+          <label class="filter-checkbox"><input type="checkbox" value="nike" class="brandFilter" /> Nike</label>
+          <label class="filter-checkbox"><input type="checkbox" value="adidas" class="brandFilter" /> Adidas</label>
+          <label class="filter-checkbox"><input type="checkbox" value="puma" class="brandFilter" /> Puma</label>
+          <label class="filter-checkbox"><input type="checkbox" value="new_balance" class="brandFilter" /> New Balance</label>
+          <label class="filter-checkbox"><input type="checkbox" value="other" class="brandFilter" /> Other</label>
+        </div>
+
+        <div class="filter-group">
+          <div class="filter-group-title">Price Range (&#2547;)</div>
+          <div class="price-range-inputs">
+            <input type="number" id="minPrice" placeholder="Min" min="0" />
+            <span>&ndash;</span>
+            <input type="number" id="maxPrice" placeholder="Max" min="0" />
+          </div>
+          <button type="button" class="btn-outline" id="applyPriceBtn" style="width:100%;margin-top:0.8rem;padding:0.55rem;">Apply</button>
+        </div>
+
+        <button type="button" class="btn-outline" id="clearFiltersBtn" style="width:100%;">Clear all filters</button>
+      </aside>
+
+      <div class="shop-results">
+        <p class="admin-subtext" id="resultCount" style="margin-bottom:1.2rem;"></p>
+        <div id="grid" class="product-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <h3>SneakVix</h3>
+        <p>Premium sneakers, curated drops, and a smarter way to find your next pair.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="products.html">All products</a></li>
+          <li><a href="products.html?brand=nike">Nike</a></li>
+          <li><a href="products.html?brand=adidas">Adidas</a></li>
+          <li><a href="image-search.html">Search by photo</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <ul>
+          <li><a href="profile.html">My account</a></li>
+          <li><a href="cart.html">Cart</a></li>
+          <li><a href="login.html">Log in</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">&copy; 2026 SneakVix. All rights reserved.</div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/products.js"></script>
+</body>
+</html>

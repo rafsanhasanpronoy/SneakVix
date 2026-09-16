@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Users - SneakVix Admin</title>
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <aside id="adminSidebar" class="admin-sidebar"></aside>
+    <main class="admin-main">
+      <div style="display:flex;flex-direction:column;gap:22px;">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h1 class="admin-h1">Users</h1>
+            <p class="admin-subtext" id="userCount">Loading...</p>
+          </div>
+          <input type="search" id="userSearch" class="form-input" placeholder="Search username or email..." style="max-width:260px;" />
+        </div>
+
+        <div id="alertBox"></div>
+
+        <div class="card">
+          <div style="overflow-x:auto;">
+            <table class="data-table" style="min-width:680px;">
+              <thead>
+                <tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th style="text-align:right;">Actions</th></tr>
+              </thead>
+              <tbody id="userRows">
+                <tr><td colspan="5" class="empty-row">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/admin-nav.js"></script>
+  <script src="../js/admin-users.js"></script>
+</body>
+</html>

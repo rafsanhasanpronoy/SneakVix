@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard - SneakVix Admin</title>
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body class="admin-body">
+  <div class="admin-layout">
+    <aside id="adminSidebar" class="admin-sidebar"></aside>
+    <main class="admin-main">
+      <div style="display:flex;flex-direction:column;gap:24px;">
+        <div>
+          <h1 class="admin-h1">Overview</h1>
+          <p class="admin-subtext">Welcome back. Here's what's happening today.</p>
+        </div>
+
+        <div class="stat-grid" id="statGrid">
+          <div class="stat-card"><p class="admin-subtext">Loading...</p></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-label">Recent Orders</span>
+            <a href="orders.html" style="font-size:12.5px;color:var(--admin-accent);text-decoration:none;font-weight:600;">View all &rarr;</a>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Order</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+              </thead>
+              <tbody id="recentOrders">
+                <tr><td colspan="5" class="empty-row">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/admin-nav.js"></script>
+  <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>

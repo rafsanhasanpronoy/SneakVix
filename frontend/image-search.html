@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    // Applied before first paint to avoid a flash of the wrong theme.
+    if (localStorage.getItem("sneakvix-theme") === "light") {
+      document.documentElement.classList.add("light-mode");
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Search by Photo - SneakVix</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <div class="img-search-hero">
+    <div class="container img-search-hero-inner">
+      <span class="img-search-badge">Visual Search</span>
+      <h1 class="img-search-title">Search by Photo</h1>
+      <p class="img-search-sub">Upload a photo of a sneaker and we'll find the closest matches in our catalog.</p>
+    </div>
+  </div>
+
+  <div class="container img-search-section">
+    <div class="img-search-card">
+      <input type="file" id="fileInput" accept="image/*" hidden />
+
+      <div class="img-drop-zone" id="dropZone">
+        <div class="img-drop-idle" id="dropIdle">
+          <div class="img-drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 16V4M12 4l-4 4M12 4l4 4" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <p class="img-drop-text">Drag &amp; drop a photo here</p>
+          <p class="img-drop-sub">or click to browse</p>
+          <p class="img-drop-hint">JPG or PNG, clear front-on shot works best</p>
+        </div>
+        <div class="img-drop-preview" id="dropPreview" style="display:none;">
+          <img id="preview" alt="Selected sneaker" />
+          <button type="button" class="img-preview-remove" id="removePreview" aria-label="Remove photo">&times;</button>
+        </div>
+      </div>
+
+      <button id="searchBtn" class="btn btn-primary img-search-submit" disabled>Search</button>
+      <p class="img-search-note">Your photo is only used to find similar products and isn't stored.</p>
+      <p id="error" class="error"></p>
+    </div>
+
+    <div id="results"></div>
+  </div>
+
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <h3>SneakVix</h3>
+        <p>Premium sneakers, curated drops, and a smarter way to find your next pair.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="products.html">All products</a></li>
+          <li><a href="products.html?brand=nike">Nike</a></li>
+          <li><a href="products.html?brand=adidas">Adidas</a></li>
+          <li><a href="image-search.html">Search by photo</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <ul>
+          <li><a href="profile.html">My account</a></li>
+          <li><a href="cart.html">Cart</a></li>
+          <li><a href="login.html">Log in</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">&copy; 2026 SneakVix. All rights reserved.</div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/image-search.js"></script>
+</body>
+</html>

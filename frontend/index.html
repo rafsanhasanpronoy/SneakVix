@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    // Applied before first paint to avoid a flash of the wrong theme.
+    if (localStorage.getItem("sneakvix-theme") === "light") {
+      document.documentElement.classList.add("light-mode");
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SneakVix</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <section class="hero-slider" id="heroSlider">
+    <div class="hero-track">
+      <div class="hero-slide active" data-index="0">
+        <div class="hero-bg" style="background-image:url('https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/banner-1.jpg');"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <div class="hero-eyebrow">New Balance</div>
+          <h1 class="hero-tagline">Classic<br>Comfort</h1>
+          <a href="products.html?brand=new_balance" class="hero-cta">Shop now</a>
+        </div>
+      </div>
+      <div class="hero-slide" data-index="1">
+        <div class="hero-bg" style="background-image:url('https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/banner-2.jpg');"></div>
+        <div class="hero-overlay"></div>
+      </div>
+      <div class="hero-slide" data-index="2">
+        <div class="hero-bg" style="background-image:url('https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/banner-3.jpg');"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <div class="hero-eyebrow">Bold Statement</div>
+          <h1 class="hero-tagline">Own the<br>Court</h1>
+          <a href="products.html" class="hero-cta">Shop now</a>
+        </div>
+      </div>
+    </div>
+
+    <button class="hero-arrow hero-prev" id="heroPrev" aria-label="Previous slide">&#8249;</button>
+    <button class="hero-arrow hero-next" id="heroNext" aria-label="Next slide">&#8250;</button>
+
+    <div class="hero-progress-bar"><span class="hero-progress-fill" id="heroProgress"></span></div>
+    <div class="hero-dots" id="heroDots">
+      <button class="hero-dot active" data-index="0" aria-label="Slide 1"></button>
+      <button class="hero-dot" data-index="1" aria-label="Slide 2"></button>
+      <button class="hero-dot" data-index="2" aria-label="Slide 3"></button>
+    </div>
+    <div class="hero-counter"><span id="heroCounterCurrent">01</span><span class="hero-sep">/</span><span id="heroCounterTotal">03</span></div>
+  </section>
+
+  <div class="container">
+    <div class="section-intro">
+      <div class="section-eyebrow">Explore in 3D</div>
+      <h2 class="section-title">See Every Angle</h2>
+      <div class="section-underline"></div>
+    </div>
+    <div class="shoe3d-grid">
+      <div class="shoe3d-card">
+        <div class="shoe3d-canvas-wrap"></div>
+        <div class="shoe3d-info">
+          <div class="shoe3d-name">Sneaker Scan 1</div>
+          <div class="shoe3d-hint">Move your cursor to rotate</div>
+        </div>
+      </div>
+      <div class="shoe3d-card">
+        <div class="shoe3d-canvas-wrap"></div>
+        <div class="shoe3d-info">
+          <div class="shoe3d-name">Sneaker Scan 2</div>
+          <div class="shoe3d-hint">Move your cursor to rotate</div>
+        </div>
+      </div>
+      <div class="shoe3d-card">
+        <div class="shoe3d-canvas-wrap"></div>
+        <div class="shoe3d-info">
+          <div class="shoe3d-name">Sneaker Scan 3</div>
+          <div class="shoe3d-hint">Move your cursor to rotate</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-intro">
+      <div class="section-eyebrow">Curated Selection</div>
+      <h2 class="section-title">Featured Drops</h2>
+      <div class="section-underline"></div>
+    </div>
+    <div id="featuredGrid" class="product-grid">
+      <p>Loading...</p>
+    </div>
+
+    <div class="section-intro">
+      <div class="section-eyebrow">Top Picks</div>
+      <h2 class="section-title">Shop by Brand</h2>
+      <div class="section-underline"></div>
+    </div>
+    <div class="brand-strip">
+      <a class="brand-tile" href="products.html?brand=nike">Nike</a>
+      <a class="brand-tile" href="products.html?brand=adidas">Adidas</a>
+      <a class="brand-tile" href="products.html?brand=puma">Puma</a>
+      <a class="brand-tile" href="products.html?brand=new_balance">New Balance</a>
+    </div>
+    <p style="text-align:center; margin-top:-1rem; margin-bottom:2rem;">
+      <a href="products.html" style="color:var(--primary); font-weight:600; text-decoration:none; font-size:0.92rem;">View all products &rarr;</a>
+    </p>
+
+    <div class="promo-banner">
+      <div>
+        <h3>Not sure what you're looking for?</h3>
+        <p>Upload a photo of any sneaker and we'll find the closest matches in our catalog.</p>
+      </div>
+      <a href="image-search.html"><button class="btn btn-primary large">Search by photo</button></a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="container footer-grid">
+      <div>
+        <h3>SneakVix</h3>
+        <p>Premium sneakers, curated drops, and a smarter way to find your next pair.</p>
+      </div>
+      <div>
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="products.html">All products</a></li>
+          <li><a href="products.html?brand=nike">Nike</a></li>
+          <li><a href="products.html?brand=adidas">Adidas</a></li>
+          <li><a href="image-search.html">Search by photo</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <ul>
+          <li><a href="profile.html">My account</a></li>
+          <li><a href="cart.html">Cart</a></li>
+          <li><a href="login.html">Log in</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">&copy; 2026 SneakVix. All rights reserved.</div>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="js/shoe3d.js"></script>
+  <script>
+    // Lightweight hero slider — autoplay + arrows + dots + progress bar.
+    (function () {
+      const slides = document.querySelectorAll("#heroSlider .hero-slide");
+      const dots = document.querySelectorAll("#heroDots .hero-dot");
+      const progress = document.getElementById("heroProgress");
+      const counterCurrent = document.getElementById("heroCounterCurrent");
+      let current = 0;
+      let timer;
+
+      function pad(n) { return String(n + 1).padStart(2, "0"); }
+
+      function goTo(index) {
+        slides[current].classList.remove("active");
+        dots[current].classList.remove("active");
+        current = (index + slides.length) % slides.length;
+        slides[current].classList.add("active");
+        dots[current].classList.add("active");
+        counterCurrent.textContent = pad(current);
+        restartProgress();
+      }
+
+      function restartProgress() {
+        progress.style.transition = "none";
+        progress.style.width = "0%";
+        void progress.offsetWidth;
+        progress.style.transition = "width 5.5s linear";
+        progress.style.width = "100%";
+      }
+
+      function next() { goTo(current + 1); }
+      function prev() { goTo(current - 1); }
+
+      function startAutoplay() {
+        clearInterval(timer);
+        timer = setInterval(next, 5500);
+      }
+
+      document.getElementById("heroNext").addEventListener("click", () => { next(); startAutoplay(); });
+      document.getElementById("heroPrev").addEventListener("click", () => { prev(); startAutoplay(); });
+      dots.forEach((dot) => dot.addEventListener("click", () => { goTo(Number(dot.dataset.index)); startAutoplay(); }));
+
+      restartProgress();
+      startAutoplay();
+    })();
+
+    // Featured Drops — first few products from the catalog.
+    (async function () {
+      const grid = document.getElementById("featuredGrid");
+      try {
+        const products = await api.get("/products/");
+        const featured = products.slice(0, 4);
+        if (featured.length === 0) {
+          grid.innerHTML = `<div class="empty-state"><p>No products yet — check back soon.</p></div>`;
+          return;
+        }
+        grid.innerHTML = featured.map(productCardHtml).join("");
+      } catch {
+        grid.innerHTML = `<p class="error">Could not load featured products.</p>`;
+      }
+    })();
+  </script>
+</body>
+</html>
