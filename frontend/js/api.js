@@ -1,5 +1,6 @@
 // api.js — shared across every page. Talks to the Django backend with plain fetch().
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = "https://sneakvix.onrender.com/api";
+const MEDIA_BASE = "https://sneakvix.onrender.com/media";
 
 async function apiRequest(path, { method = "GET", body, auth = true, isForm = false } = {}) {
   const headers = {};
@@ -82,7 +83,8 @@ function currentUser() {
 function mediaUrl(path) {
   if (!path) return "";
   if (/^https?:\/\//i.test(path)) return path; // already a full URL (e.g. Supabase Storage)
-  return `http://localhost:8000/media/${path}`;
+  const cleanPath = String(path).replace(/^\/+/, "");
+  return `${MEDIA_BASE}/${cleanPath}`;
 }
 
 function formatPrice(amount) {
