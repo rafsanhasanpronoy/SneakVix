@@ -1,3 +1,5 @@
+import logging
+
 import django_filters
 import requests
 from django.conf import settings
@@ -21,6 +23,7 @@ from .serializers import (
 )
 
 DELIVERY_CHARGE = 100  # matches checkout.php
+logger = logging.getLogger(__name__)
 
 
 class IsAdmin(permissions.BasePermission):
@@ -153,7 +156,6 @@ class CartViewSet(viewsets.ModelViewSet):
 class CheckoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    @transaction.atomic
     def post(self, request):
         items = Cart.objects.filter(user=request.user).select_related("product")
         if not items.exists():
@@ -163,25 +165,36 @@ class CheckoutView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        subtotal = sum(i.product.price * i.quantity for i in items)
-        total = subtotal + DELIVERY_CHARGE
+        # Keep the database transaction limited to the order creation work.
+        # Email delivery is external I/O and must never hold the DB transaction
+        # open or be able to roll back an otherwise valid order.
+        with transaction.atomic():
+            subtotal = sum(i.product.price * i.quantity for i in items)
+            total = subtotal + DELIVERY_CHARGE
 
-        order = Order.objects.create(user=request.user, total_amount=total, status="pending")
-        OrderAddress.objects.create(order=order, **data)
+            order = Order.objects.create(user=request.user, total_amount=total, status="pending")
+            OrderAddress.objects.create(order=order, **data)
 
-        for i in items:
-            OrderItem.objects.create(
-                order=order, product=i.product, size=i.size,
-                quantity=i.quantity, unit_price=i.product.price,
-            )
-            # decrement stock atomically at the DB level, mirroring the PHP checkout flow
-            ProductSize.objects.filter(product=i.product, size=i.size).update(
-                stock=F("stock") - i.quantity
-            )
+            for i in items:
+                OrderItem.objects.create(
+                    order=order, product=i.product, size=i.size,
+                    quantity=i.quantity, unit_price=i.product.price,
+                )
+                # decrement stock atomically at the DB level, mirroring the PHP checkout flow
+                ProductSize.objects.filter(product=i.product, size=i.size).update(
+                    stock=F("stock") - i.quantity
+                )
 
-        items.delete()
+            items.delete()
 
-        email_sent = send_order_confirmation_email(order)
+        # Email is deliberately best-effort. A missing/broken SMTP service must
+        # never turn a successful checkout into HTTP 500 after the order commits.
+        email_sent = False
+        try:
+            email_sent = send_order_confirmation_email(order)
+        except Exception:
+            logger.exception("Order confirmation email failed for order %s", order.id)
+
         response_data = OrderSerializer(order).data
         response_data["email_sent"] = email_sent
         response_data["bkash_number"] = BKASH_NUMBER
