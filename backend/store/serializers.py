@@ -75,6 +75,10 @@ class CartItemSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "product", "product_name", "product_price", "product_image", "stock", "added_at"]
 
+    def get_stock(self, obj):
+        ps = obj.product.sizes.filter(size=obj.size).first()
+        return ps.stock if ps else 0
+
 
 class OrderAddressSerializer(serializers.ModelSerializer):
     class Meta:
