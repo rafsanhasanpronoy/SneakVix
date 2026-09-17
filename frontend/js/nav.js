@@ -5,6 +5,15 @@ const MENU_ICON = '<svg class="menu-icon" width="22" height="22" fill="none" str
 const CLOSE_ICON = '<svg class="close-icon" width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>';
 const THEME_KEY = "sneakvix-theme";
 
+function loadMobileNavStyles() {
+  if (document.getElementById("sneakvix-mobile-nav-css")) return;
+  const link = document.createElement("link");
+  link.id = "sneakvix-mobile-nav-css";
+  link.rel = "stylesheet";
+  link.href = `${window.location.pathname.includes("/admin/") ? "../" : ""}css/mobile-nav.css`;
+  document.head.appendChild(link);
+}
+
 function applyStoredTheme() {
   const theme = localStorage.getItem(THEME_KEY);
   document.documentElement.classList.toggle("light-mode", theme === "light");
@@ -13,6 +22,8 @@ function toggleTheme() {
   const isLight = document.documentElement.classList.toggle("light-mode");
   localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
 }
+
+loadMobileNavStyles();
 applyStoredTheme();
 
 function navLinks(base, currentPage) {
@@ -22,6 +33,14 @@ function navLinks(base, currentPage) {
     { href: `${base}image-search.html`, label: "Image Search", page: "image-search.html" },
   ];
   return links.map((l) => `<a href="${escapeHtml(l.href)}" class="${l.page === currentPage ? "active" : ""}">${escapeHtml(l.label)}</a>`).join("");
+}
+
+function closeMobileNav() {
+  document.getElementById("mobileNavPanel")?.classList.remove("open");
+  document.getElementById("mobileMenuToggle")?.classList.remove("open");
+  document.getElementById("mobileMenuToggle")?.setAttribute("aria-expanded", "false");
+  document.getElementById("mobileMenuToggle")?.setAttribute("aria-label", "Open navigation menu");
+  document.body.classList.remove("mobile-menu-open");
 }
 
 function renderNav() {
@@ -39,11 +58,9 @@ function renderNav() {
           <img class="logo-dark" src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo.png" alt="SneakVix" />
           <img class="logo-light" src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo-light.png" alt="SneakVix" />
         </a>
-
         <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open navigation menu" aria-expanded="false">
           ${MENU_ICON}${CLOSE_ICON}
         </button>
-
         <div class="mobile-nav-panel" id="mobileNavPanel">
           <nav class="nav-links">${navLinks(base, currentPage)}</nav>
           <form class="header-search" id="headerSearchForm">
@@ -75,11 +92,7 @@ function renderNav() {
     document.body.classList.toggle("mobile-menu-open", open);
   });
 
-  document.querySelectorAll("#mobileNavPanel .nav-links a").forEach((link) => link.addEventListener("click", () => {
-    document.getElementById("mobileNavPanel")?.classList.remove("open");
-    document.getElementById("mobileMenuToggle")?.classList.remove("open");
-    document.body.classList.remove("mobile-menu-open");
-  }));
+  document.querySelectorAll("#mobileNavPanel .nav-links a").forEach((link) => link.addEventListener("click", closeMobileNav));
 
   document.getElementById("headerSearchForm").addEventListener("submit", (e) => {
     e.preventDefault();
