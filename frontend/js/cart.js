@@ -29,8 +29,7 @@ async function loadGuestCartView(el) {
     return;
   }
 
-  // Fetch each product fresh (public endpoint, no auth needed) so price,
-  // image, and current stock stay accurate rather than a stale snapshot.
+  // Fetch each product fresh so price, image, and selected-size stock stay current.
   const results = await Promise.allSettled(
     guestItems.map(async (gi) => ({ gi, product: await api.get(`/products/${gi.product_id}/`) }))
   );
@@ -40,6 +39,7 @@ async function loadGuestCartView(el) {
   results.forEach((r, idx) => {
     if (r.status === "fulfilled") {
       const { gi, product: p } = r.value;
+      const sizeRow = (p.sizes || []).find((s) => Number(s.size) === Number(gi.size));
       items.push({
         id: `${gi.product_id}-${gi.size}`,
         product_id: gi.product_id,
@@ -48,10 +48,11 @@ async function loadGuestCartView(el) {
         product_image: p.image_main,
         size: gi.size,
         quantity: gi.quantity,
+        stock: sizeRow ? Number(sizeRow.stock) : 0,
       });
-      stillValid.push(guestItems[idx]);
+      stillValid.push(gi);
     }
-    // rejected = product no longer exists; drop it from the guest cart below
+    // If the product no longer exists, remove that stale guest-cart entry.
   });
 
   if (stillValid.length !== guestItems.length) saveGuestCart(stillValid);
@@ -73,6 +74,7 @@ function renderCart(el, items, isGuest) {
 
   const subtotal = items.reduce((sum, i) => sum + Number(i.product_price) * i.quantity, 0);
   const deliveryEstimate = 100.0;
+  const hasStockIssue = items.some((i) => Number(i.stock) < Number(i.quantity));
 
   el.innerHTML = `
     <h1 class="cart-page-title">Your Cart</h1>
@@ -80,24 +82,38 @@ function renderCart(el, items, isGuest) {
       ${items.length} item${items.length > 1 ? "s" : ""} in your cart
       ${isGuest ? ' &middot; <a href="login.html" style="color:var(--primary);text-decoration:none;">log in</a> to save it to your account' : ""}
     </p>
+    ${hasStockIssue ? `
+      <div class="error" style="margin-bottom:1rem;">
+        Some cart items no longer have enough stock. Remove or reduce the affected items before checkout.
+      </div>
+    ` : ""}
 
     <div class="cart-layout">
       <div>
         ${items
           .map(
-            (i) => `
-          <div class="cart-item-row">
-            <img class="cart-item-img" src="${mediaUrl(i.product_image)}" alt="${i.product_name}" />
+            (i) => {
+              const stock = Number(i.stock);
+              const quantity = Number(i.quantity);
+              const stockIssue = stock < quantity;
+              const stockText = stockIssue
+                ? (stock > 0 ? `Only ${stock} available` : "Out of stock")
+                : `${stock} available`;
+              return `
+          <div class="cart-item-row${stockIssue ? " cart-item-stock-warning" : ""}">
+            <img class="cart-item-img" src="${escapeHtml(mediaUrl(i.product_image))}" alt="${escapeHtml(i.product_name)}" />
             <div class="cart-item-info">
-              <h4>${i.product_name}</h4>
-              <span class="cart-item-price">${formatPrice(i.product_price * i.quantity)}</span>
-              <small>Size ${i.size} &middot; Qty ${i.quantity}</small>
+              <h4>${escapeHtml(i.product_name)}</h4>
+              <span class="cart-item-price">${formatPrice(i.product_price * quantity)}</span>
+              <small>Size ${escapeHtml(i.size)} &middot; Qty ${quantity}</small>
+              <small class="cart-stock-status">${escapeHtml(stockText)}</small>
             </div>
             <div class="cart-item-actions">
-              <button class="cart-remove-link removeBtn" data-id="${i.id}" data-product-id="${i.product_id}" data-size="${i.size}">Remove</button>
+              <button class="cart-remove-link removeBtn" data-id="${escapeHtml(i.id)}" data-product-id="${escapeHtml(i.product_id)}" data-size="${escapeHtml(i.size)}">Remove</button>
             </div>
           </div>
-        `
+        `;
+            }
           )
           .join("")}
       </div>
@@ -111,9 +127,11 @@ function renderCart(el, items, isGuest) {
           <span>Total</span>
           <span class="total-amount">${formatPrice(subtotal + deliveryEstimate)}</span>
         </div>
-        <a href="${isGuest ? "login.html?next=checkout.html" : "checkout.html"}">
-          <button class="btn-checkout">${isGuest ? "Log in to checkout" : "Proceed to checkout"}</button>
-        </a>
+        ${hasStockIssue
+          ? `<button class="btn-checkout" type="button" disabled title="Update your cart stock before checkout">Update cart to checkout</button>`
+          : `<a href="${isGuest ? "login.html?next=checkout.html" : "checkout.html"}">
+              <button class="btn-checkout" type="button">${isGuest ? "Log in to checkout" : "Proceed to checkout"}</button>
+            </a>`}
         <p class="cart-secure-note">Secure checkout</p>
       </div>
     </div>
@@ -123,11 +141,11 @@ function renderCart(el, items, isGuest) {
     btn.addEventListener("click", async () => {
       if (isGuest) {
         removeFromGuestCart(Number(btn.dataset.productId), Number(btn.dataset.size));
-        loadCart();
+        await loadCart();
         renderNav();
       } else {
         await api.del(`/cart/${btn.dataset.id}/`);
-        loadCart();
+        await loadCart();
         renderNav();
       }
     });
