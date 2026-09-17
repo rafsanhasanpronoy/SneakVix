@@ -1,90 +1,110 @@
-# SneakVix — Django (Python) + plain HTML/CSS/JS
+# SneakVix
 
-Same backend as before (unchanged), but the frontend is now plain
-`.html` files with `<script>` tags using `fetch()` — **no Node, no npm,
-no build step.**
+SneakVix is a sneaker e-commerce platform built with:
 
+- Django + Django REST Framework
+- PostgreSQL (Supabase)
+- Static HTML, CSS and JavaScript frontend
+- Netlify (frontend hosting)
+- Render (backend hosting)
+
+## Live Architecture
+
+Frontend:
+- Netlify
+
+Backend:
+- Django API on Render
+
+Database:
+- Supabase PostgreSQL
+
+## Environment Variables
+
+### Backend (Render)
+
+Required:
+
+```env
+SECRET_KEY=your_secret_key
+DEBUG=False
+ALLOWED_HOSTS=sneakvix.onrender.com
+DATABASE_URL=postgresql://...
+CORS_ALLOWED_ORIGINS=https://sneakvix.netlify.app
 ```
-scaffold2/
-  backend/     Django + DRF + PostgreSQL   (identical to the React version)
-  frontend/    plain HTML/CSS/JS, open directly or serve with any static server
+
+Optional Email (Resend):
+
+```env
+RESEND_API_KEY=re_xxxxxxxxx
+DEFAULT_FROM_EMAIL=orders@sneakvix.com
 ```
 
-## 1. Backend (same as before)
+## Deployment
+
+### Frontend
+
+Deploy the frontend folder to Netlify.
+
+Set the API base URL in the frontend configuration:
+
+```js
+https://sneakvix.onrender.com/api
+```
+
+### Backend
+
+Deploy the Django backend to Render.
+
+Build Command:
 
 ```bash
-cd backend
-python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env      # edit DB_USER / DB_PASSWORD
-python manage.py makemigrations store
 python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
+python manage.py collectstatic --noinput
 ```
 
-Runs at `http://localhost:8000`.
+Start Command:
 
-## 2. Frontend — no install step at all
-
-You have two options:
-
-**Option A — just double-click `index.html`**
-Works for browsing, but `fetch()` calls to `localhost:8000` can behave
-oddly from a `file://` URL in some browsers. Fine for a quick look.
-
-**Option B — serve it with Python's built-in server (recommended)**
 ```bash
-cd frontend
-python3 -m http.server 5500
+gunicorn config.wsgi:application
 ```
-Then open `http://localhost:5500` in your browser. This matches the
-`CORS_ALLOWED_ORIGINS` already set in the backend's `.env.example`.
 
-That's it — no `npm install`, no `package.json`, no build tool. Every
-`.html` file loads `js/api.js` (the fetch wrapper + JWT storage) and
-`js/nav.js` (renders the navbar), then its own page-specific script.
+## Features
 
-## 3. Page map (mirrors your original PHP structure)
+- Product catalog
+- Product details
+- Shopping cart
+- Checkout system
+- Order management
+- Admin dashboard
+- Responsive frontend
 
-| Page | File | Talks to |
-|---|---|---|
-| Home | `index.html` | — |
-| Product list | `products.html` + `js/products.js` | `GET /api/products/` |
-| Product detail | `product.html?id=1` + `js/product.js` | `GET /api/products/:id/`, `POST /api/cart/` |
-| Cart | `cart.html` + `js/cart.js` | `GET/DELETE /api/cart/` |
-| Checkout | `checkout.html` + `js/checkout.js` | `POST /api/checkout/` |
-| Login / Signup | `login.html`, `signup.html` | `/api/auth/...` |
-| Profile / orders | `profile.html` + `js/profile.js` | `GET /api/orders/` |
-| Image search | `image-search.html` + `js/image-search.js` | `POST /api/image-search/` |
-| Admin products | `admin/products.html` | `GET /api/products/` |
-| Admin orders | `admin/orders.html` | `GET/PATCH /api/admin/orders/` |
+## Current Status
 
-## 4. How auth works without a framework
+Completed:
+- Product browsing
+- Cart management
+- Checkout workflow
+- Supabase database integration
+- Netlify frontend deployment
+- Render backend deployment
 
-`js/api.js` stores the JWT `access`/`refresh` tokens and the logged-in
-user object in `localStorage`. Every page that needs a login calls
-`requireLogin()` at the top of its script, which redirects to
-`login.html` if there's no token. `js/nav.js` re-renders the navbar
-on every page load by checking `isLoggedIn()`.
+Planned Improvements:
+- Enhanced admin product management
+- Order analytics dashboard
+- Inventory tracking
+- Coupon system
+- Advanced search and filtering
 
-## 5. What still needs work (same list as before, still applies)
+## Repository Structure
 
-1. Admin product create/edit form — `admin/products.html` currently
-   only lists products; add a `<form>` posting to
-   `POST/PATCH /api/products/:id/` with a `sizes` array.
-2. Order status emails (see backend README notes — same TODOs).
-3. Styling — `css/style.css` is intentionally plain; restyle using
-   your original look from `assets/css/style.css`.
-4. Deployment — the backend deploys the same way as before (Gunicorn +
-   Postgres). The frontend, being plain static files, can be hosted
-   literally anywhere: Django's own `staticfiles`, Nginx, GitHub Pages,
-   or any static host — just update `API_BASE` in `js/api.js` to your
-   production API URL.
+```text
+backend/
+frontend/
+assets/
+```
 
-## 6. Suggested build order
+## License
 
-Same as before: get the backend running with a couple of test
-products → browse/cart/checkout end to end → login/signup →
-admin order status updates → admin product form → image search →
-styling → deploy.
+Private project for SneakVix.
