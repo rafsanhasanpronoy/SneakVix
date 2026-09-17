@@ -1,7 +1,7 @@
 // nav.js — injects the navbar into #navbar on every page and keeps the cart count live.
 const SUN_ICON = '<svg class="icon-sun" width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
 const MOON_ICON = '<svg class="icon-moon" width="17" height="17" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>';
-const MENU_ICON = '<svg class="menu-icon" width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>';
+const MENU_ICON = '<svg class="menu-icon" width="22" height="22" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
 const CLOSE_ICON = '<svg class="close-icon" width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" d="M6 6l12 12M18 6L6 18"/></svg>';
 const THEME_KEY = "sneakvix-theme";
 
@@ -37,6 +37,7 @@ function navLinks(base, currentPage) {
 
 function closeMobileNav() {
   document.getElementById("mobileNavPanel")?.classList.remove("open");
+  document.getElementById("mobileNavOverlay")?.classList.remove("open");
   document.getElementById("mobileMenuToggle")?.classList.remove("open");
   document.getElementById("mobileMenuToggle")?.setAttribute("aria-expanded", "false");
   document.getElementById("mobileMenuToggle")?.setAttribute("aria-label", "Open navigation menu");
@@ -61,6 +62,7 @@ function renderNav() {
         <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open navigation menu" aria-expanded="false">
           ${MENU_ICON}${CLOSE_ICON}
         </button>
+        <div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
         <div class="mobile-nav-panel" id="mobileNavPanel">
           <nav class="nav-links">${navLinks(base, currentPage)}</nav>
           <form class="header-search" id="headerSearchForm">
@@ -85,18 +87,22 @@ function renderNav() {
   document.getElementById("mobileMenuToggle").addEventListener("click", () => {
     const toggle = document.getElementById("mobileMenuToggle");
     const panel = document.getElementById("mobileNavPanel");
+    const overlay = document.getElementById("mobileNavOverlay");
     const open = panel.classList.toggle("open");
     toggle.classList.toggle("open", open);
+    overlay.classList.toggle("open", open);
     toggle.setAttribute("aria-expanded", String(open));
     toggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
     document.body.classList.toggle("mobile-menu-open", open);
   });
 
-  document.querySelectorAll("#mobileNavPanel .nav-links a").forEach((link) => link.addEventListener("click", closeMobileNav));
+  document.getElementById("mobileNavOverlay").addEventListener("click", closeMobileNav);
+  document.querySelectorAll("#mobileNavPanel a").forEach((link) => link.addEventListener("click", closeMobileNav));
 
   document.getElementById("headerSearchForm").addEventListener("submit", (e) => {
     e.preventDefault();
     const q = document.getElementById("headerSearchInput").value.trim();
+    closeMobileNav();
     window.location.href = `${base}products.html${q ? `?search=${encodeURIComponent(q)}` : ""}`;
   });
   updateCartCount();
