@@ -1,4 +1,5 @@
 // checkout.js
+// SneakVix currently uses a fixed ৳100 delivery charge for Bangladesh orders.
 const DELIVERY_CHARGE = 100.0;
 
 async function showTotals() {
@@ -15,8 +16,8 @@ async function showTotals() {
     .map(
       (i) => `
     <div class="checkout-mini-item">
-      <img class="checkout-mini-img" src="${mediaUrl(i.product_image)}" alt="${i.product_name}" />
-      <div class="checkout-mini-name">${i.product_name}<br><small>Size ${i.size} &middot; Qty ${i.quantity}</small></div>
+      <img class="checkout-mini-img" src="${mediaUrl(i.product_image)}" alt="${escapeHtml(i.product_name)}" />
+      <div class="checkout-mini-name">${escapeHtml(i.product_name)}<br><small>Size ${escapeHtml(i.size)} &middot; Qty ${escapeHtml(i.quantity)}</small></div>
       <span class="checkout-mini-price">${formatPrice(i.product_price * i.quantity)}</span>
     </div>
   `
@@ -66,7 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
 function showOrderSuccess(order) {
   const paddedId = String(order.id).padStart(6, "0");
   const bkashNumber = order.bkash_number || "01XXXXXXXXX";
-  const bkashAmount = 100;
+
+  // The backend calculates the authoritative order total, including the
+  // fixed Bangladesh delivery charge. Use that exact total for bKash so the
+  // customer is never instructed to send an incorrect amount.
+  const bkashAmount = Number(order.total_amount);
 
   document.getElementById("checkoutIntro").style.display = "none";
   document.getElementById("checkoutLayout").style.display = "none";
@@ -85,18 +90,18 @@ function showOrderSuccess(order) {
       </div>
 
       <div class="bkash-box">
-        <div class="bkash-box-header"><strong>\uD83D\uDCF1 Complete Your Payment via bKash</strong></div>
+        <div class="bkash-box-header"><strong>\uD83D\DCF1 Complete Your Payment via bKash</strong></div>
         <div class="bkash-box-body">
           <table class="bkash-table">
-            <tr><td>bKash Number</td><td>${bkashNumber}</td></tr>
+            <tr><td>bKash Number</td><td>${escapeHtml(bkashNumber)}</td></tr>
             <tr><td>Amount</td><td>${formatPrice(bkashAmount)}</td></tr>
-            <tr class="ref-row"><td>Reference (Required)</td><td>#${paddedId}</td></tr>
+            <tr class="ref-row"><td>Reference (Required)</td><td>#${escapeHtml(paddedId)}</td></tr>
           </table>
           <ol class="bkash-steps">
             <li>Open bKash &rarr; tap <strong>Send Money</strong></li>
-            <li>Enter number: <strong>${bkashNumber}</strong></li>
-            <li>Amount: <strong>${bkashAmount} Taka</strong></li>
-            <li>Reference: <strong>#${paddedId}</strong></li>
+            <li>Enter number: <strong>${escapeHtml(bkashNumber)}</strong></li>
+            <li>Amount: <strong>${formatPrice(bkashAmount)}</strong></li>
+            <li>Reference: <strong>#${escapeHtml(paddedId)}</strong></li>
             <li>Complete payment</li>
           </ol>
           <div class="bkash-warning">Order will only be processed after bKash payment is verified.</div>
@@ -106,8 +111,8 @@ function showOrderSuccess(order) {
       <p class="order-email-note">
         ${
           order.email_sent
-            ? "\uD83D\uDCE7 A confirmation email with payment instructions has been sent to your inbox."
-            : "\uD83D\uDCE7 We couldn't send the confirmation email \u2014 but your order is placed. Note your Order ID above."
+            ? "\uD83D\DCE7 A confirmation email with payment instructions has been sent to your inbox."
+            : "\uD83D\DCE7 We couldn't send the confirmation email \u2014 but your order is placed. Note your Order ID above."
         }
       </p>
 
