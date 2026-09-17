@@ -46,7 +46,6 @@ class IsAdmin(permissions.BasePermission):
 def validate_size_rows(rows):
     if not isinstance(rows, list) or not rows:
         raise ValidationError({"sizes": "At least one size is required."})
-
     seen = set()
     cleaned = []
     for index, row in enumerate(rows):
@@ -130,24 +129,18 @@ class ProductViewSet(viewsets.ModelViewSet):
         if sizes is not None:
             sizes = validate_size_rows(sizes)
             existing = {row.size: row for row in product.sizes.select_for_update()}
-            incoming = {row["size"]: row["stock"] for row in sizes}
-            for size, stock in incoming.items():
+            for row in sizes:
+                size, stock = row["size"], row["stock"]
                 if size in existing:
                     existing[size].stock = stock
                     existing[size].save(update_fields=["stock"])
                 else:
                     ProductSize.objects.create(product=product, size=size, stock=stock)
-            removed = set(existing) - set(incoming)
-            if removed:
-                ProductSize.objects.filter(product=product, size__in=removed).delete()
 
     def destroy(self, request, *args, **kwargs):
         product = self.get_object()
         if OrderItem.objects.filter(product=product).exists():
-            return Response(
-                {"error": "This product cannot be deleted because it is referenced by an existing order."},
-                status=status.HTTP_409_CONFLICT,
-            )
+            return Response({"error": "This product cannot be deleted because it is referenced by an existing order."}, status=status.HTTP_409_CONFLICT)
         return super().destroy(request, *args, **kwargs)
 
 
@@ -165,14 +158,11 @@ class CartViewSet(viewsets.ModelViewSet):
         except (TypeError, ValueError):
             return Response({"error": "Invalid size."}, status=400)
         product = get_object_or_404(Product, id=product_id)
-
         with transaction.atomic():
             ps = ProductSize.objects.select_for_update().filter(product=product, size=size).first()
             if not ps or ps.stock < 1:
                 return Response({"error": "Selected size is out of stock"}, status=400)
-            item, created = Cart.objects.select_for_update().get_or_create(
-                user=request.user, product=product, size=size, defaults={"quantity": 1}
-            )
+            item, created = Cart.objects.select_for_update().get_or_create(user=request.user, product=product, size=size, defaults={"quantity": 1})
             if not created:
                 if item.quantity >= min(ps.stock, MAX_CART_QUANTITY):
                     return Response({"error": f"Cart quantity cannot exceed {min(ps.stock, MAX_CART_QUANTITY)}."}, status=400)
@@ -189,47 +179,63 @@ class CheckoutView(APIView):
         serializer = CheckoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-
         with transaction.atomic():
             items = list(Cart.objects.filter(user=request.user).select_related("product"))
             if not items:
                 return Response({"error": "Your cart is empty"}, status=400)
-
             subtotal = sum(i.product.price * i.quantity for i in items)
             if subtotal < 0:
                 raise ValidationError({"total": "Invalid order total."})
             total = subtotal + DELIVERY_CHARGE
             order = Order.objects.create(user=request.user, total_amount=total, status="pending")
             OrderAddress.objects.create(order=order, **data)
-
             for i in items:
                 if i.quantity < 1 or i.quantity > MAX_CART_QUANTITY:
                     raise ValidationError({"quantity": f"Invalid quantity for {i.product.name}, size {i.size}."})
-                updated = ProductSize.objects.filter(
-                    product=i.product,
-                    size=i.size,
-                    stock__gte=i.quantity,
-                ).update(stock=F("stock") - i.quantity)
+                updated = ProductSize.objects.filter(product=i.product, size=i.size, stock__gte=i.quantity).update(stock=F("stock") - i.quantity)
                 if updated != 1:
                     raise ValidationError({"stock": f"Insufficient stock for {i.product.name}, size {i.size}."})
-
-                OrderItem.objects.create(
-                    order=order, product=i.product, size=i.size,
-                    quantity=i.quantity, unit_price=i.product.price,
-                )
-
+                OrderItem.objects.create(order=order, product=i.product, size=i.size, quantity=i.quantity, unit_price=i.product.price)
             Cart.objects.filter(user=request.user).delete()
-
         email_sent = False
         try:
             email_sent = send_order_confirmation_email(order)
         except Exception:
             logger.exception("Order confirmation email failed for order %s", order.id)
-
         response_data = OrderSerializer(order).data
         response_data["email_sent"] = email_sent
         response_data["bkash_number"] = BKASH_NUMBER
         return Response(response_data, status=201)
+
+
+class PaymentSubmitSerializer(serializers.Serializer):
+    payment_reference = serializers.CharField(min_length=6, max_length=100, trim_whitespace=True)
+    payment_amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01)
+
+
+class PaymentSubmitView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, order_id):
+        serializer = PaymentSubmitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ref = serializer.validated_data["payment_reference"]
+        amount = serializer.validated_data["payment_amount"]
+        with transaction.atomic():
+            order = get_object_or_404(Order.objects.select_for_update(), id=order_id, user=request.user)
+            if order.status != "pending":
+                return Response({"error": "Payment can only be submitted for a pending order."}, status=409)
+            if order.payment_reference:
+                return Response({"error": "Payment has already been submitted for this order."}, status=409)
+            if amount != order.total_amount:
+                return Response({"error": "Payment amount does not match the order total."}, status=400)
+            if Order.objects.filter(payment_reference=ref).exists():
+                return Response({"error": "This payment reference has already been submitted."}, status=409)
+            order.payment_reference = ref
+            order.payment_amount = amount
+            order.payment_submitted_at = timezone.now()
+            order.save(update_fields=["payment_reference", "payment_amount", "payment_submitted_at", "updated_at"])
+        return Response(OrderSerializer(order).data, status=200)
 
 
 class OrderListView(generics.ListAPIView):
@@ -261,12 +267,11 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
                 return Response(OrderSerializer(order).data)
             if new_status not in ORDER_TRANSITIONS.get(order.status, set()):
                 return Response({"error": f"Invalid status transition: {order.status} -> {new_status}."}, status=409)
-
+            if new_status == "paid" and not order.payment_reference:
+                return Response({"error": "Payment reference must be submitted before marking an order paid."}, status=409)
             if new_status == "cancelled":
                 for item in order.items.all():
-                    ProductSize.objects.filter(product=item.product, size=item.size).update(
-                        stock=F("stock") + item.quantity
-                    )
+                    ProductSize.objects.filter(product=item.product, size=item.size).update(stock=F("stock") + item.quantity)
             order.status = new_status
             if new_status == "paid" and order.payment_verified_at is None:
                 order.payment_verified_at = timezone.now()
@@ -314,13 +319,8 @@ class ImageSearchView(APIView):
             return Response({"error": "No image received."}, status=400)
         if image.size > 10 * 1024 * 1024:
             return Response({"error": "File too large. Maximum size is 10MB."}, status=400)
-
         try:
-            resp = requests.post(
-                settings.IMAGE_SEARCH_FLASK_URL,
-                files={"image": (image.name, image.read(), image.content_type)},
-                timeout=30,
-            )
+            resp = requests.post(settings.IMAGE_SEARCH_FLASK_URL, files={"image": (image.name, image.read(), image.content_type)}, timeout=30)
             resp.raise_for_status()
             matches = resp.json()
             if not isinstance(matches, dict) or not isinstance(matches.get("results", []), list):
@@ -335,6 +335,5 @@ class ImageSearchView(APIView):
         except (requests.RequestException, ValueError) as exc:
             logger.exception("Image search failed")
             return Response({"error": f"Image search service unavailable: {exc}"}, status=502)
-
         products = Product.objects.filter(id__in=product_ids)
         return Response(ProductListSerializer(products, many=True).data)
