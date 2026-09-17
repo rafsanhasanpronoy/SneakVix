@@ -162,15 +162,20 @@ async function mergeGuestCartIntoServerCart() {
 
   const remaining = [];
   for (const item of items) {
-    let merged = true;
-    try {
-      for (let i = 0; i < item.quantity; i++) {
+    let mergedQuantity = 0;
+    for (let i = 0; i < item.quantity; i++) {
+      try {
         await api.post("/cart/", { product_id: item.product_id, size: item.size });
+        mergedQuantity += 1;
+      } catch {
+        break;
       }
-    } catch {
-      merged = false;
     }
-    if (!merged) remaining.push(item);
+
+    const unmergedQuantity = item.quantity - mergedQuantity;
+    if (unmergedQuantity > 0) {
+      remaining.push({ ...item, quantity: unmergedQuantity });
+    }
   }
 
   if (remaining.length) saveGuestCart(remaining);
