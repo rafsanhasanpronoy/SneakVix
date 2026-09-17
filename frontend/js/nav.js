@@ -14,7 +14,7 @@ function toggleTheme() {
   localStorage.setItem(THEME_KEY, isLight ? "light" : "dark");
 }
 
-applyStoredTheme(); // run immediately, not just on DOMContentLoaded, to avoid a flash of the wrong theme
+applyStoredTheme();
 
 function navLinks(base, currentPage) {
   const links = [
@@ -25,7 +25,7 @@ function navLinks(base, currentPage) {
   return links
     .map(
       (l) =>
-        `<a href="${l.href}" class="${l.page === currentPage ? "active" : ""}">${l.label}</a>`
+        `<a href="${escapeHtml(l.href)}" class="${l.page === currentPage ? "active" : ""}">${escapeHtml(l.label)}</a>`
     )
     .join("");
 }
@@ -35,15 +35,14 @@ function renderNav() {
   if (!el) return;
 
   const user = currentUser();
-
-  // pages inside /admin/ need "../" to reach the top-level pages
   const base = window.location.pathname.includes("/admin/") ? "../" : "";
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  const username = escapeHtml(user?.username || "");
 
   el.innerHTML = `
     <header>
       <div class="container header-flex">
-        <a href="${base}index.html" class="logo">
+        <a href="${escapeHtml(base)}index.html" class="logo">
           <img class="logo-dark" src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo.png" alt="SneakVix" />
           <img class="logo-light" src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo-light.png" alt="SneakVix" />
         </a>
@@ -63,17 +62,17 @@ function renderNav() {
           <button id="themeToggle" class="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
             ${SUN_ICON}${MOON_ICON}
           </button>
-          <a href="${base}cart.html" class="nav-signin" id="cartCountLink">Cart (0)</a>
+          <a href="${escapeHtml(base)}cart.html" class="nav-signin" id="cartCountLink">Cart (0)</a>
           ${
             user
               ? `
-            <a href="${base}profile.html" class="nav-signin">${user.username}</a>
-            ${user.role === "admin" ? `<a href="${base}admin/index.html" class="admin-link">Admin</a>` : ""}
+            <a href="${escapeHtml(base)}profile.html" class="nav-signin">${username}</a>
+            ${user.role === "admin" ? `<a href="${escapeHtml(base)}admin/index.html" class="admin-link">Admin</a>` : ""}
             <button id="logoutBtn" class="logout-btn">Logout</button>
           `
               : `
-            <a href="${base}login.html" class="nav-signin">Sign in</a>
-            <a href="${base}signup.html" class="nav-signup">Sign up</a>
+            <a href="${escapeHtml(base)}login.html" class="nav-signin">Sign in</a>
+            <a href="${escapeHtml(base)}signup.html" class="nav-signup">Sign up</a>
           `
           }
         </div>
@@ -114,7 +113,7 @@ function bumpCartBadge() {
   const link = document.getElementById("cartCountLink");
   if (!link) return;
   link.classList.remove("cart-bump");
-  void link.offsetWidth; // restart the animation even if triggered again quickly
+  void link.offsetWidth;
   link.classList.add("cart-bump");
 }
 
