@@ -3,9 +3,7 @@ from django.db import models
 
 
 class User(AbstractUser):
-    """Extends Django's built-in auth so you get password hashing,
-    sessions, and admin login for free instead of hand-rolling it like
-    the old password_hash column did."""
+    """Extends Django's built-in auth."""
     ROLE_CHOICES = [("customer", "Customer"), ("admin", "Admin")]
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="customer")
 
@@ -20,7 +18,7 @@ class Product(models.Model):
         ("puma", "Puma"),
         ("new_balance", "New Balance"),
         ("other", "Other"),
-    ]  # mirrors the old USER-DEFINED enum type — adjust values to match your real enum
+    ]
 
     name = models.CharField(max_length=255)
     brand = models.CharField(max_length=50, choices=BRAND_CHOICES)
@@ -58,7 +56,7 @@ class Cart(models.Model):
 
     class Meta:
         db_table = "cart"
-        unique_together = ("user", "product", "size")  # mirrors the old ON DUPLICATE KEY behavior
+        unique_together = ("user", "product", "size")
 
 
 class Order(models.Model):
@@ -70,9 +68,13 @@ class Order(models.Model):
         ("delivered", "Delivered"),
         ("cancelled", "Cancelled"),
     ]
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
+    user = models.ForeignKey(User, on_delete=models.PROTECT, related_name="orders")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    payment_reference = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    payment_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    payment_submitted_at = models.DateTimeField(null=True, blank=True)
+    payment_verified_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -96,7 +98,7 @@ class OrderAddress(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
     size = models.SmallIntegerField()
     quantity = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)

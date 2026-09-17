@@ -11,6 +11,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "email", "role", "date_joined"]
+        read_only_fields = ["id", "username", "email", "role", "date_joined"]
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -35,10 +36,6 @@ class ProductSizeSerializer(serializers.ModelSerializer):
 
 
 class ProductListSerializer(serializers.ModelSerializer):
-    """Lighter payload for the /products grid — now also carries a computed
-    total_stock so the admin products list (and any other list view) can
-    show stock without needing the full sizes breakdown."""
-
     total_stock = serializers.SerializerMethodField()
 
     class Meta:
@@ -60,9 +57,6 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         ]
 
     def get_sizes(self, obj):
-        # ALL sizes, including sold-out ones — the frontend shows out-of-
-        # stock sizes as disabled rather than omitting them (a missing size
-        # reads as "never existed", not "sold out").
         all_sizes = obj.sizes.order_by("size")
         return ProductSizeSerializer(all_sizes, many=True).data
 
@@ -79,6 +73,7 @@ class CartItemSerializer(serializers.ModelSerializer):
             "id", "product", "product_name", "product_price", "product_image",
             "size", "quantity", "stock", "added_at",
         ]
+        read_only_fields = ["id", "product", "product_name", "product_price", "product_image", "stock", "added_at"]
 
     def get_stock(self, obj):
         ps = obj.product.sizes.filter(size=obj.size).first()
@@ -106,13 +101,15 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ["id", "total_amount", "status", "created_at", "updated_at", "address", "items"]
+        fields = [
+            "id", "total_amount", "status", "created_at", "updated_at",
+            "payment_reference", "payment_amount", "payment_submitted_at",
+            "payment_verified_at", "address", "items",
+        ]
+        read_only_fields = fields
 
 
 class CheckoutSerializer(serializers.Serializer):
-    """Validates the shipping form + creates the order from the user's cart
-    in one atomic step. See views.CheckoutView."""
-
     full_name = serializers.CharField(min_length=3, max_length=255)
     phone = serializers.RegexField(r"^[\+0-9\s\-]{10,15}$")
     address_line1 = serializers.CharField(min_length=5, max_length=255)
