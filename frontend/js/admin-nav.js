@@ -1,6 +1,5 @@
 // admin-nav.js — injects the admin sidebar into #adminSidebar on every admin
-// page, highlights the active section, and guards the whole admin area
-// (redirects anyone who isn't logged in as an admin).
+// page, highlights the active section, and guards the whole admin area.
 const ADMIN_ICONS = {
   dashboard: '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zm10 8h8V3h-8v18zM3 21h8v-6H3v6z"/></svg>',
   products: '<svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',
@@ -14,6 +13,7 @@ function renderAdminSidebar() {
 
   const user = currentUser();
   const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  const username = escapeHtml(user?.username || "");
   const links = [
     { href: "index.html", label: "Dashboard", icon: "dashboard", pages: ["index.html"] },
     { href: "products.html", label: "Products", icon: "products", pages: ["products.html", "add-product.html", "edit-product.html"] },
@@ -30,15 +30,15 @@ function renderAdminSidebar() {
       ${links
         .map(
           (l) => `
-        <a href="${l.href}" class="${l.pages.includes(currentPage) ? "active" : ""}">
-          ${ADMIN_ICONS[l.icon]} ${l.label}
+        <a href="${escapeHtml(l.href)}" class="${l.pages.includes(currentPage) ? "active" : ""}">
+          ${ADMIN_ICONS[l.icon]} ${escapeHtml(l.label)}
         </a>
       `
         )
         .join("")}
     </nav>
     <div class="admin-sidebar-foot">
-      <div class="admin-user-chip">Signed in as <strong>&nbsp;${user?.username || ""}</strong></div>
+      <div class="admin-user-chip">Signed in as <strong>&nbsp;${username}</strong></div>
       <button class="admin-logout-btn" id="adminLogoutBtn">Log out</button>
       <a href="../index.html" class="admin-logout-btn" style="display:block;text-align:center;text-decoration:none;margin-top:8px;">&larr; Back to store</a>
     </div>
