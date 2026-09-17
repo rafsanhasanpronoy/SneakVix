@@ -1,0 +1,202 @@
+/* SneakVix mobile navigation drawer */
+
+.mobile-menu-toggle {
+    display: none;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    z-index: 1201;
+}
+
+.mobile-menu-toggle:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.mobile-menu-toggle .close-icon { display: none; }
+.mobile-menu-toggle.open .menu-icon { display: none; }
+.mobile-menu-toggle.open .close-icon { display: block; }
+
+.mobile-nav-panel {
+    display: contents;
+}
+
+.mobile-menu-open {
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 0.8rem 0;
+    }
+
+    .header-flex {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0;
+        position: relative;
+    }
+
+    .logo {
+        min-width: 0;
+    }
+
+    .logo img {
+        height: 38px;
+        max-width: 190px;
+    }
+
+    .mobile-menu-toggle {
+        display: flex;
+        margin-left: auto;
+    }
+
+    .mobile-nav-panel {
+        position: fixed;
+        inset: 0;
+        z-index: 1100;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: min(86vw, 360px);
+        margin-left: auto;
+        padding: 5.5rem 1.4rem 2rem;
+        gap: 1.5rem;
+        overflow-y: auto;
+        background: var(--card);
+        border-left: 1px solid var(--card-border);
+        box-shadow: -18px 0 45px rgba(0, 0, 0, 0.35);
+        transform: translateX(105%);
+        visibility: hidden;
+        transition: transform 0.28s ease, visibility 0.28s ease;
+    }
+
+    .mobile-nav-panel::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        right: 100%;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.48);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.28s ease;
+    }
+
+    .mobile-nav-panel.open {
+        transform: translateX(0);
+        visibility: visible;
+    }
+
+    .mobile-nav-panel.open::before {
+        opacity: 1;
+    }
+
+    .mobile-nav-panel .nav-links {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        width: 100%;
+    }
+
+    .mobile-nav-panel .nav-links a,
+    .mobile-nav-panel nav a {
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0.95rem 0.5rem;
+        border-bottom: 1px solid var(--card-border);
+        font-size: 0.9rem;
+    }
+
+    .mobile-nav-panel .nav-links a:first-child {
+        border-top: 1px solid var(--card-border);
+    }
+
+    .mobile-nav-panel nav a.active::after {
+        display: none;
+    }
+
+    .mobile-nav-panel .nav-links a.active {
+        color: var(--primary);
+    }
+
+    .mobile-nav-panel .header-search {
+        display: flex;
+        width: 100%;
+        flex: 0 0 auto;
+    }
+
+    .mobile-nav-panel .header-search input {
+        min-width: 0;
+    }
+
+    .mobile-nav-panel .nav-right {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 0.75rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--card-border);
+    }
+
+    .mobile-nav-panel .nav-right > * {
+        width: 100%;
+        margin: 0;
+        text-align: center;
+    }
+
+    .mobile-nav-panel .theme-toggle {
+        width: 44px;
+        align-self: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-nav-panel .nav-signup,
+    .mobile-nav-panel .logout-btn {
+        padding: 0.75rem 1rem;
+    }
+
+    .mobile-nav-panel .admin-link {
+        padding: 0.75rem 1rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .logo img {
+        height: 34px;
+        max-width: 160px;
+    }
+
+    .mobile-menu-toggle {
+        width: 42px;
+        height: 42px;
+        flex-basis: 42px;
+    }
+
+    .mobile-nav-panel {
+        width: min(90vw, 340px);
+        padding-left: 1.1rem;
+        padding-right: 1.1rem;
+    }
+}
