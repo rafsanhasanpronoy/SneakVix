@@ -216,6 +216,9 @@ body.admin-body {
 /* ==================== RESPONSIVE ADMIN UI ==================== */
 html, body { max-width: 100%; overflow-x: hidden; }
 .admin-main { min-width: 0; }
+.admin-mobile-toggle,
+.admin-mobile-overlay { display: none; }
+body.admin-menu-open { overflow: hidden; }
 
 @media (max-width: 900px) {
     .admin-sidebar { width: 200px; }
