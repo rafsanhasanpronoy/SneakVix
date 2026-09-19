@@ -59,42 +59,6 @@ function renderNav() {
           <img class="logo-dark" src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo.png" alt="SneakVix" />
           <img class="logo-light" src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo-light.png" alt="SneakVix" />
         </a>
-<<<<<<< HEAD
-
-        <nav class="nav-links">
-          ${navLinks(base, currentPage)}
-        </nav>
-
-        <form class="header-search" id="headerSearchForm">
-          <input type="search" id="headerSearchInput" placeholder="Search sneakers..." autocomplete="off" />
-          <button type="submit" aria-label="Search">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.3-4.3"/></svg>
-          </button>
-        </form>
-
-        <div class="nav-right">
-          <button id="themeToggle" class="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">
-            ${SUN_ICON}${MOON_ICON}
-          </button>
-          <div class="cart-dropdown-wrap" id="cartDropdownWrap">
-            <a href="${base}cart.html" class="nav-signin" id="cartCountLink">Cart (0)</a>
-            <div class="cart-dropdown glass-panel" id="cartDropdown">
-              <p class="cart-dropdown-empty">Loading...</p>
-            </div>
-          </div>
-          ${
-            user
-              ? `
-            <a href="${base}profile.html" class="nav-signin">${user.username}</a>
-            ${user.role === "admin" ? `<a href="${base}admin/index.html" class="admin-link">Admin</a>` : ""}
-            <button id="logoutBtn" class="logout-btn">Logout</button>
-          `
-              : `
-            <a href="${base}login.html" class="nav-signin">Sign in</a>
-            <a href="${base}signup.html" class="nav-signup">Sign up</a>
-          `
-          }
-=======
         <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open navigation menu" aria-expanded="false">
           ${MENU_ICON}${CLOSE_ICON}
         </button>
@@ -112,7 +76,6 @@ function renderNav() {
             <a href="${escapeHtml(base)}cart.html" class="nav-signin" id="cartCountLink">Cart (0)</a>
             ${user ? `<a href="${escapeHtml(base)}profile.html" class="nav-signin">${username}</a>${user.role === "admin" ? `<a href="${escapeHtml(base)}admin/index.html" class="admin-link">Admin</a>` : ""}<button id="logoutBtn" class="logout-btn">Logout</button>` : `<a href="${escapeHtml(base)}login.html" class="nav-signin">Sign in</a><a href="${escapeHtml(base)}signup.html" class="nav-signup">Sign up</a>`}
           </div>
->>>>>>> 6dfcf1a0e685ab3aa5a3ee085ab15676e16d61c3
         </div>
       </div>
     </header>`;
@@ -142,12 +105,9 @@ function renderNav() {
     closeMobileNav();
     window.location.href = `${base}products.html${q ? `?search=${encodeURIComponent(q)}` : ""}`;
   });
-<<<<<<< HEAD
 
   document.getElementById("cartDropdownWrap").addEventListener("mouseenter", renderCartDropdown);
 
-=======
->>>>>>> 6dfcf1a0e685ab3aa5a3ee085ab15676e16d61c3
   updateCartCount();
 }
 
