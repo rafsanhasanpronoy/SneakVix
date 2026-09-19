@@ -25,8 +25,6 @@ function renderAdminSidebar() {
     <div class="admin-sidebar-logo">
       <img src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo.png" alt="SneakVix" />
     </div>
-    <button class="admin-mobile-toggle" id="adminMobileToggle" type="button" aria-label="Open admin menu" aria-expanded="false">⋮</button>
-    <div class="admin-mobile-overlay" id="adminMobileOverlay"></div>
     <div class="admin-sidebar-tag">Admin panel</div>
     <nav class="admin-nav-links">
       ${links
@@ -48,8 +46,23 @@ function renderAdminSidebar() {
 
   document.getElementById("adminLogoutBtn").addEventListener("click", logout);
 
-  const toggle = document.getElementById("adminMobileToggle");
-  const overlay = document.getElementById("adminMobileOverlay");
+  document.getElementById("adminMobileToggle")?.remove();
+  document.getElementById("adminMobileOverlay")?.remove();
+
+  const toggle = document.createElement("button");
+  toggle.className = "admin-mobile-toggle";
+  toggle.id = "adminMobileToggle";
+  toggle.type = "button";
+  toggle.setAttribute("aria-label", "Open admin menu");
+  toggle.setAttribute("aria-expanded", "false");
+  toggle.innerHTML = "<span aria-hidden=\"true\">⋮</span>";
+
+  const overlay = document.createElement("div");
+  overlay.className = "admin-mobile-overlay";
+  overlay.id = "adminMobileOverlay";
+
+  document.body.append(toggle, overlay);
+
   const sidebar = document.getElementById("adminSidebar");
   const closeAdminMenu = () => {
     sidebar.classList.remove("open");
