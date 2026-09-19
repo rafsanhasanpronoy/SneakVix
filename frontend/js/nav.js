@@ -73,7 +73,12 @@ function renderNav() {
           </form>
           <div class="nav-right">
             <button id="themeToggle" class="theme-toggle" aria-label="Toggle light/dark mode" title="Toggle light/dark mode">${SUN_ICON}${MOON_ICON}</button>
-            <a href="${escapeHtml(base)}cart.html" class="nav-signin" id="cartCountLink">Cart (0)</a>
+            <div class="cart-dropdown-wrap" id="cartDropdownWrap">
+              <a href="${escapeHtml(base)}cart.html" class="nav-signin" id="cartCountLink">Cart (0)</a>
+              <div class="cart-dropdown glass-panel" id="cartDropdown">
+                <p class="cart-dropdown-empty">Loading...</p>
+              </div>
+            </div>
             ${user ? `<a href="${escapeHtml(base)}profile.html" class="nav-signin">${username}</a>${user.role === "admin" ? `<a href="${escapeHtml(base)}admin/index.html" class="admin-link">Admin</a>` : ""}<button id="logoutBtn" class="logout-btn">Logout</button>` : `<a href="${escapeHtml(base)}login.html" class="nav-signin">Sign in</a><a href="${escapeHtml(base)}signup.html" class="nav-signup">Sign up</a>`}
           </div>
         </div>
