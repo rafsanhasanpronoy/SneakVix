@@ -15,8 +15,14 @@
 </head>
 <body>
   <div id="navbar"></div>
-  <div class="container">
-    <h1>Shop</h1>
+  <div class="container products-page">
+    <div class="products-page-heading">
+      <div>
+        <div class="section-eyebrow">SneakVix Collection</div>
+        <h1>Find Your Pair</h1>
+        <p class="products-page-subtitle">Browse the latest sneakers and refine the collection to match your style.</p>
+      </div>
+    </div>
 
     <div class="shop-toolbar">
       <form class="shop-search" id="shopSearchForm">
@@ -62,7 +68,13 @@
       </aside>
 
       <div class="shop-results">
-        <p class="admin-subtext" id="resultCount" style="margin-bottom:1.2rem;"></p>
+        <div class="shop-results-header">
+          <div>
+            <div class="shop-results-label">Collection</div>
+            <p id="resultCount" class="shop-results-count"></p>
+          </div>
+          <span class="shop-results-hint">Tap a product to view details</span>
+        </div>
         <div id="grid" class="product-grid"></div>
       </div>
     </div>
