@@ -25,6 +25,8 @@ function renderAdminSidebar() {
     <div class="admin-sidebar-logo">
       <img src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo.png" alt="SneakVix" />
     </div>
+    <button class="admin-mobile-toggle" id="adminMobileToggle" type="button" aria-label="Open admin menu" aria-expanded="false">⋮</button>
+    <div class="admin-mobile-overlay" id="adminMobileOverlay"></div>
     <div class="admin-sidebar-tag">Admin panel</div>
     <nav class="admin-nav-links">
       ${links
@@ -45,6 +47,29 @@ function renderAdminSidebar() {
   `;
 
   document.getElementById("adminLogoutBtn").addEventListener("click", logout);
+
+  const toggle = document.getElementById("adminMobileToggle");
+  const overlay = document.getElementById("adminMobileOverlay");
+  const sidebar = document.getElementById("adminSidebar");
+  const closeAdminMenu = () => {
+    sidebar.classList.remove("open");
+    overlay.classList.remove("open");
+    toggle.classList.remove("open");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.setAttribute("aria-label", "Open admin menu");
+    document.body.classList.remove("admin-menu-open");
+  };
+  toggle.addEventListener("click", () => {
+    const open = sidebar.classList.toggle("open");
+    overlay.classList.toggle("open", open);
+    toggle.classList.toggle("open", open);
+    toggle.textContent = open ? "×" : "⋮";
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "Close admin menu" : "Open admin menu");
+    document.body.classList.toggle("admin-menu-open", open);
+  });
+  overlay.addEventListener("click", closeAdminMenu);
+  sidebar.querySelectorAll("a").forEach((a) => a.addEventListener("click", closeAdminMenu));
 }
 
 document.addEventListener("DOMContentLoaded", () => {
