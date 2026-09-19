@@ -28,6 +28,7 @@ function renderCart(el, items, isGuest) {
 
   const subtotal = items.reduce((sum, i) => sum + Number(i.product_price) * i.quantity, 0);
   const deliveryEstimate = 100.0;
+  const hasStockIssue = items.some((i) => Number(i.stock) < Number(i.quantity));
 
   el.innerHTML = `
     <h1 class="cart-page-title">Your Cart</h1>
@@ -35,24 +36,38 @@ function renderCart(el, items, isGuest) {
       ${items.length} item${items.length > 1 ? "s" : ""} in your cart
       ${isGuest ? ' &middot; <a href="login.html" style="color:var(--primary);text-decoration:none;">log in</a> to save it to your account' : ""}
     </p>
+    ${hasStockIssue ? `
+      <div class="error" style="margin-bottom:1rem;">
+        Some cart items no longer have enough stock. Remove or reduce the affected items before checkout.
+      </div>
+    ` : ""}
 
     <div class="cart-layout">
       <div>
         ${items
           .map(
-            (i) => `
-          <div class="cart-item-row">
-            <img class="cart-item-img" src="${mediaUrl(i.product_image)}" alt="${i.product_name}" />
+            (i) => {
+              const stock = Number(i.stock);
+              const quantity = Number(i.quantity);
+              const stockIssue = stock < quantity;
+              const stockText = stockIssue
+                ? (stock > 0 ? `Only ${stock} available` : "Out of stock")
+                : `${stock} available`;
+              return `
+          <div class="cart-item-row${stockIssue ? " cart-item-stock-warning" : ""}">
+            <img class="cart-item-img" src="${escapeHtml(mediaUrl(i.product_image))}" alt="${escapeHtml(i.product_name)}" />
             <div class="cart-item-info">
-              <h4>${i.product_name}</h4>
-              <span class="cart-item-price">${formatPrice(i.product_price * i.quantity)}</span>
-              <small>Size ${i.size} &middot; Qty ${i.quantity}</small>
+              <h4>${escapeHtml(i.product_name)}</h4>
+              <span class="cart-item-price">${formatPrice(i.product_price * quantity)}</span>
+              <small>Size ${escapeHtml(i.size)} &middot; Qty ${quantity}</small>
+              <small class="cart-stock-status">${escapeHtml(stockText)}</small>
             </div>
             <div class="cart-item-actions">
-              <button class="cart-remove-link removeBtn" data-id="${i.id}" data-product-id="${i.product_id}" data-size="${i.size}" data-name="${i.product_name}">Remove</button>
+              <button class="cart-remove-link removeBtn" data-id="${escapeHtml(i.id)}" data-product-id="${escapeHtml(i.product_id)}" data-size="${escapeHtml(i.size)}" data-name="${escapeHtml(i.product_name)}">Remove</button>
             </div>
           </div>
-        `
+        `;
+            }
           )
           .join("")}
       </div>
@@ -66,9 +81,11 @@ function renderCart(el, items, isGuest) {
           <span>Total</span>
           <span class="total-amount">${formatPrice(subtotal + deliveryEstimate)}</span>
         </div>
-        <a href="${isGuest ? "login.html?next=checkout.html" : "checkout.html"}">
-          <button class="btn-checkout">${isGuest ? "Log in to checkout" : "Proceed to checkout"}</button>
-        </a>
+        ${hasStockIssue
+          ? `<button class="btn-checkout" type="button" disabled title="Update your cart stock before checkout">Update cart to checkout</button>`
+          : `<a href="${isGuest ? "login.html?next=checkout.html" : "checkout.html"}">
+              <button class="btn-checkout" type="button">${isGuest ? "Log in to checkout" : "Proceed to checkout"}</button>
+            </a>`}
         <p class="cart-secure-note">Secure checkout</p>
       </div>
     </div>
@@ -78,7 +95,7 @@ function renderCart(el, items, isGuest) {
     btn.addEventListener("click", () => {
       openConfirmModal({
         title: "Remove item?",
-        message: `Remove ${btn.dataset.name} from your cart?`,
+        message: `Remove ${escapeHtml(btn.dataset.name)} from your cart?`,
         confirmLabel: "Remove",
         danger: true,
         onConfirm: async () => {
@@ -87,7 +104,7 @@ function renderCart(el, items, isGuest) {
           } else {
             await api.del(`/cart/${btn.dataset.id}/`);
           }
-          loadCart();
+          await loadCart();
           renderNav();
         },
       });

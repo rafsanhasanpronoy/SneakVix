@@ -1,90 +1,298 @@
-# SneakVix — Django (Python) + plain HTML/CSS/JS
+# SneakVix
 
-Same backend as before (unchanged), but the frontend is now plain
-`.html` files with `<script>` tags using `fetch()` — **no Node, no npm,
-no build step.**
+SneakVix is a full-stack sneaker e-commerce platform with a static frontend, Django REST API, PostgreSQL database, image-search service, customer accounts, cart and checkout workflows, order management, and an admin panel.
 
+## Live Application
+
+- **Frontend:** https://sneakvix.netlify.app
+- **Backend API:** https://sneakvix.onrender.com
+- **API base URL:** `https://sneakvix.onrender.com/api`
+- **Database:** PostgreSQL hosted by Supabase
+- **Image storage:** Supabase Storage
+
+## Technology Stack
+
+### Frontend
+
+- HTML5
+- CSS3
+- Vanilla JavaScript
+- Netlify hosting
+- Supabase Storage for product and brand images
+
+### Backend
+
+- Python
+- Django
+- Django REST Framework
+- Simple JWT authentication
+- PostgreSQL
+- Gunicorn
+- Render hosting
+
+### Supporting Services
+
+- Supabase PostgreSQL
+- Supabase Storage
+- Resend for transactional email
+- Separate image-search service
+
+## Core Features
+
+### Customer Features
+
+- Browse sneaker products
+- Search products
+- Filter by brand and price range
+- Sort products by newest, price, and name
+- Product detail pages with multiple images
+- EU size and quantity selection
+- Guest shopping cart using browser storage
+- Authenticated server-side shopping cart
+- Guest-cart merge after login or signup
+- Customer registration and login
+- JWT access/refresh authentication
+- Automatic access-token refresh
+- Checkout and delivery information
+- Order creation and order history
+- Manual bKash payment instructions
+- Order confirmation email when email delivery is available
+- Light/dark theme
+- Responsive frontend
+- Sneaker image search
+
+### Inventory Features
+
+- Product-specific EU sizes
+- Per-size stock quantities
+- Duplicate-size prevention
+- Stock validation on cart operations
+- Transactional stock deduction during checkout
+- Protection against overselling during concurrent checkout attempts
+- Product deletion protection when historical orders reference the product
+
+### Admin Features
+
+- Admin-only dashboard
+- Product listing and statistics
+- Add products
+- Edit products
+- Delete products when permitted
+- Product image upload to Supabase Storage
+- Product size and stock management
+- Order listing and order details
+- Order status management
+- User management
+- Admin authorization enforced by the backend API
+
+## Authentication and Authorization
+
+SneakVix uses JWT authentication through Django REST Framework Simple JWT.
+
+- Access and refresh tokens are used by the frontend.
+- Authenticated API requests send the access token in the `Authorization` header.
+- Expired access tokens can be refreshed automatically using the refresh token.
+- Product browsing is publicly accessible.
+- Product mutations, order administration, user administration, and other protected operations require appropriate permissions.
+- Admin API operations require an authenticated user with the `admin` role.
+
+## Email
+
+Transactional email is supported through Resend.
+
+The backend uses the Resend email backend when `RESEND_API_KEY` is configured. If the key is not available, Django falls back to its console email backend for local/development use.
+
+Example environment variables:
+
+```env
+RESEND_API_KEY=re_xxxxxxxxx
+DEFAULT_FROM_EMAIL=your-verified-sender@example.com
 ```
-scaffold2/
-  backend/     Django + DRF + PostgreSQL   (identical to the React version)
-  frontend/    plain HTML/CSS/JS, open directly or serve with any static server
+
+Do not commit real API keys, passwords, database credentials, or other secrets to the repository.
+
+## Environment Variables
+
+### Backend (Render)
+
+Typical production configuration includes:
+
+```env
+SECRET_KEY=your_secret_key
+DEBUG=False
+ALLOWED_HOSTS=sneakvix.onrender.com
+DATABASE_URL=postgresql://...
+CORS_ALLOWED_ORIGINS=https://sneakvix.netlify.app
 ```
 
-## 1. Backend (same as before)
+Optional email configuration:
+
+```env
+RESEND_API_KEY=re_xxxxxxxxx
+DEFAULT_FROM_EMAIL=your-verified-sender@example.com
+```
+
+Actual production secrets should be configured through Render environment variables and should never be committed to GitHub.
+
+## Deployment
+
+### Frontend — Netlify
+
+Deploy the `frontend/` directory as the static site.
+
+The frontend API configuration points to:
+
+```text
+https://sneakvix.onrender.com/api
+```
+
+### Backend — Render
+
+The Django backend is deployed from the `backend/` directory.
+
+Build command:
 
 ```bash
-cd backend
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env      # edit DB_USER / DB_PASSWORD
-python manage.py makemigrations store
+pip install -r requirements.txt && python manage.py migrate && python manage.py collectstatic --noinput
+```
+
+Start command:
+
+```bash
+gunicorn config.wsgi:application
+```
+
+### Database — Supabase
+
+The application uses PostgreSQL through Supabase. Database migrations are applied by Django during deployment.
+
+## Project Structure
+
+```text
+SneakVix/
+├── backend/
+│   ├── config/
+│   ├── store/
+│   ├── manage.py
+│   └── requirements.txt
+├── frontend/
+│   ├── admin/
+│   ├── css/
+│   ├── js/
+│   ├── *.html
+│   └── assets/
+├── .vscode/
+├── README.md
+└── requirements.txt
+```
+
+The exact contents may evolve as the application is developed.
+
+## API Overview
+
+The Django REST API is available under:
+
+```text
+https://sneakvix.onrender.com/api/
+```
+
+Major API areas include:
+
+```text
+/api/auth/
+/api/products/
+/api/cart/
+/api/checkout/
+/api/orders/
+/api/users/
+/api/image-search/
+```
+
+Protected endpoints require JWT authentication, and administrative operations require the appropriate admin role.
+
+## Development
+
+### Backend
+
+From the `backend/` directory:
+
+```bash
 python manage.py migrate
-python manage.py createsuperuser
 python manage.py runserver
 ```
 
-Runs at `http://localhost:8000`.
+For a local production-style server:
 
-## 2. Frontend — no install step at all
-
-You have two options:
-
-**Option A — just double-click `index.html`**
-Works for browsing, but `fetch()` calls to `localhost:8000` can behave
-oddly from a `file://` URL in some browsers. Fine for a quick look.
-
-**Option B — serve it with Python's built-in server (recommended)**
 ```bash
-cd frontend
-python3 -m http.server 5500
+gunicorn config.wsgi:application
 ```
-Then open `http://localhost:5500` in your browser. This matches the
-`CORS_ALLOWED_ORIGINS` already set in the backend's `.env.example`.
 
-That's it — no `npm install`, no `package.json`, no build tool. Every
-`.html` file loads `js/api.js` (the fetch wrapper + JWT storage) and
-`js/nav.js` (renders the navbar), then its own page-specific script.
+### Frontend
 
-## 3. Page map (mirrors your original PHP structure)
+The frontend is composed of static HTML, CSS, and JavaScript files. During local development, serve the `frontend/` directory with a static HTTP server rather than opening the HTML files directly when browser/API behavior requires an HTTP origin.
 
-| Page | File | Talks to |
-|---|---|---|
-| Home | `index.html` | — |
-| Product list | `products.html` + `js/products.js` | `GET /api/products/` |
-| Product detail | `product.html?id=1` + `js/product.js` | `GET /api/products/:id/`, `POST /api/cart/` |
-| Cart | `cart.html` + `js/cart.js` | `GET/DELETE /api/cart/` |
-| Checkout | `checkout.html` + `js/checkout.js` | `POST /api/checkout/` |
-| Login / Signup | `login.html`, `signup.html` | `/api/auth/...` |
-| Profile / orders | `profile.html` + `js/profile.js` | `GET /api/orders/` |
-| Image search | `image-search.html` + `js/image-search.js` | `POST /api/image-search/` |
-| Admin products | `admin/products.html` | `GET /api/products/` |
-| Admin orders | `admin/orders.html` | `GET/PATCH /api/admin/orders/` |
+## Data and Inventory Notes
 
-## 4. How auth works without a framework
+Product inventory is tracked by product and EU shoe size. A product can have multiple size records, but a size can appear only once for a given product.
 
-`js/api.js` stores the JWT `access`/`refresh` tokens and the logged-in
-user object in `localStorage`. Every page that needs a login calls
-`requireLogin()` at the top of its script, which redirects to
-`login.html` if there's no token. `js/nav.js` re-renders the navbar
-on every page load by checking `isLoggedIn()`.
+Checkout performs stock deduction transactionally and validates that sufficient stock remains before decrementing inventory.
 
-## 5. What still needs work (same list as before, still applies)
+## Payment Notes
 
-1. Admin product create/edit form — `admin/products.html` currently
-   only lists products; add a `<form>` posting to
-   `POST/PATCH /api/products/:id/` with a `sizes` array.
-2. Order status emails (see backend README notes — same TODOs).
-3. Styling — `css/style.css` is intentionally plain; restyle using
-   your original look from `assets/css/style.css`.
-4. Deployment — the backend deploys the same way as before (Gunicorn +
-   Postgres). The frontend, being plain static files, can be hosted
-   literally anywhere: Django's own `staticfiles`, Nginx, GitHub Pages,
-   or any static host — just update `API_BASE` in `js/api.js` to your
-   production API URL.
+The current checkout uses a **manual bKash payment workflow**. The application creates the order first and displays the configured bKash payment instructions and order reference to the customer. Payment verification is handled separately; this is not a direct bKash API/payment-gateway integration.
 
-## 6. Suggested build order
+## Security Notes
 
-Same as before: get the backend running with a couple of test
-products → browse/cart/checkout end to end → login/signup →
-admin order status updates → admin product form → image search →
-styling → deploy.
+The application includes several production-oriented security measures, including HTTPS redirection, secure cookies, content-type sniffing protection, referrer policy, frame protection, JWT authentication, backend permission checks, and transactional inventory updates.
+
+Security-sensitive values must remain in environment variables. Frontend code must not contain private API keys or database credentials.
+
+## Testing and Quality
+
+Important areas to test before production changes include:
+
+- Authentication and token refresh
+- Guest and authenticated cart behavior
+- Guest-cart merging
+- Product and size validation
+- Inventory limits and concurrent checkout
+- Checkout totals and order creation
+- Order status changes
+- Admin authorization
+- Product image upload
+- Image-search failures and malformed responses
+- Frontend HTML escaping and XSS resistance
+- API rate limiting and abuse protection
+
+## Current Status
+
+Implemented and deployed:
+
+- Product catalog and product details
+- Search, filtering, and sorting
+- Guest and authenticated carts
+- JWT authentication
+- Checkout and order creation
+- Transactional inventory management
+- Manual bKash payment instructions
+- Transactional email integration through Resend
+- Admin dashboard and management pages
+- Supabase PostgreSQL integration
+- Supabase Storage integration
+- Image-search functionality
+- Netlify frontend deployment
+- Render backend deployment
+
+Potential future improvements include:
+
+- Full online payment-gateway integration
+- Coupon and promotion support
+- More advanced sales analytics
+- API rate limiting and throttling
+- Additional security hardening such as a stricter Content Security Policy
+- Improved automated test coverage
+- Expanded product and order reporting
+
+## License
+
+Private project for SneakVix.

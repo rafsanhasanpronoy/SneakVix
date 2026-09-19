@@ -60,7 +60,7 @@ function render(o) {
 
       <div class="card">
         <div class="card-header"><span class="card-header-label">Shipping Address</span></div>
-        <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="admin-shipping-grid" style="padding:20px;">
           <div><span class="form-label">Full name</span><div>${a.full_name || "—"}</div></div>
           <div><span class="form-label">Phone</span><div>${a.phone || "—"}</div></div>
           <div><span class="form-label">Address</span><div>${a.address_line1 || ""}${a.address_line2 ? `, ${a.address_line2}` : ""}</div></div>
@@ -98,7 +98,7 @@ function render(o) {
 
       <div class="card">
         <div class="card-header"><span class="card-header-label">Order Summary</span></div>
-        <div style="padding:20px;display:flex;flex-direction:column;gap:8px;max-width:280px;margin-left:auto;">
+        <div class="admin-order-summary" style="padding:20px;">
           <div style="display:flex;justify-content:space-between;"><span class="admin-subtext">Items subtotal</span><span>${formatPrice(subtotal)}</span></div>
           <div style="display:flex;justify-content:space-between;"><span class="admin-subtext">Delivery / fees</span><span>${formatPrice(other)}</span></div>
           <hr style="border:none;border-top:1px solid var(--admin-border-soft);margin:6px 0;" />

@@ -24,15 +24,16 @@ async function loadProduct() {
 function renderBreadcrumb(p) {
   const bc = document.getElementById("breadcrumb");
   if (!bc) return;
-  const brandLabel = BRAND_LABELS[p.brand] || p.brand;
+  const brandLabel = escapeHtml(BRAND_LABELS[p.brand] || p.brand);
+  const brand = encodeURIComponent(p.brand || "");
   bc.innerHTML = `
     <a href="index.html">Home</a>
     <span class="sep">/</span>
     <a href="products.html">Shop</a>
     <span class="sep">/</span>
-    <a href="products.html?brand=${p.brand}">${brandLabel}</a>
+    <a href="products.html?brand=${brand}">${brandLabel}</a>
     <span class="sep">/</span>
-    <span class="current">${p.name}</span>
+    <span class="current">${escapeHtml(p.name)}</span>
   `;
 }
 
@@ -40,29 +41,31 @@ function render() {
   const p = currentProduct;
   const el = document.getElementById("detail");
   const images = [p.image_main, p.image2, p.image3].filter(Boolean);
+  const safeName = escapeHtml(p.name);
+  const safeBrand = escapeHtml(BRAND_LABELS[p.brand] || p.brand);
 
   renderBreadcrumb(p);
 
   el.innerHTML = `
     <div>
       <div class="product-hero-img">
-        <img id="mainImage" src="${mediaUrl(p.image_main)}" alt="${p.name}" style="width:100%;display:block;object-fit:contain;background:#f8f9fa;" />
+        <img id="mainImage" src="${escapeHtml(mediaUrl(p.image_main))}" alt="${safeName}" style="width:100%;display:block;object-fit:contain;background:#f8f9fa;" />
       </div>
       <div class="thumb-strip">
         ${images
           .map(
             (img, i) =>
-              `<img class="thumb ${i === 0 ? "active" : ""}" src="${mediaUrl(img)}" data-src="${mediaUrl(img)}" alt="${p.name} view ${i + 1}" />`
+              `<img class="thumb ${i === 0 ? "active" : ""}" src="${escapeHtml(mediaUrl(img))}" data-src="${escapeHtml(mediaUrl(img))}" alt="${safeName} view ${i + 1}" />`
           )
           .join("")}
       </div>
     </div>
     <div>
-      <p class="product-brand">${p.brand}</p>
-      <h1>${p.name}</h1>
+      <p class="product-brand">${safeBrand}</p>
+      <h1>${safeName}</h1>
       <p class="product-price">${formatPrice(p.price)}</p>
       ${stockBadgeHtml(p.sizes)}
-      <p class="product-desc">${p.description || ""}</p>
+      <p class="product-desc">${escapeHtml(p.description || "")}</p>
 
       <p class="product-section-label">Select size &amp; quantity</p>
       <div class="size-picker" id="sizePicker">
@@ -123,10 +126,10 @@ function sizeRowHtml(s) {
   const lowStock = !outOfStock && s.stock <= 5;
   const stockLabel = outOfStock ? "Out of stock" : lowStock ? `Only ${s.stock} left` : "In stock";
   return `
-    <div class="size-picker-row ${outOfStock ? "is-out-of-stock" : ""}" data-size="${s.size}" data-stock="${s.stock}">
+    <div class="size-picker-row ${outOfStock ? "is-out-of-stock" : ""}" data-size="${escapeHtml(s.size)}" data-stock="${escapeHtml(s.stock)}">
       <div class="size-picker-label">
-        <span class="size-picker-size">EU ${s.size}</span>
-        <span class="size-picker-stock ${lowStock ? "low" : ""} ${outOfStock ? "out" : ""}">${stockLabel}</span>
+        <span class="size-picker-size">EU ${escapeHtml(s.size)}</span>
+        <span class="size-picker-stock ${lowStock ? "low" : ""} ${outOfStock ? "out" : ""}">${escapeHtml(stockLabel)}</span>
       </div>
       <div class="qty-stepper">
         <button type="button" class="qty-minus" ${qty === 0 || outOfStock ? "disabled" : ""}>&minus;</button>
@@ -177,7 +180,7 @@ function updateSelectionSummary() {
   const totalPrice = totalItems * Number(currentProduct.price);
   summary.innerHTML = `
     <p class="selection-total">${totalItems} item${totalItems > 1 ? "s" : ""} selected \u2014 <span class="amount">${formatPrice(totalPrice)}</span></p>
-    <p class="cart-selection-summary">${entries.map(([size, q]) => `EU ${size} \u00d7${q}`).join(", ")}</p>
+    <p class="cart-selection-summary">${entries.map(([size, q]) => `EU ${escapeHtml(size)} \u00d7${escapeHtml(q)}`).join(", ")}</p>
   `;
 }
 
@@ -197,16 +200,12 @@ async function handleAdd() {
 
   try {
     if (isLoggedIn()) {
-      // The cart endpoint adds one unit per call and increments quantity on
-      // repeat calls, so multiple sizes/quantities are added as a sequence
-      // of calls rather than a single bulk request.
       for (const [size, qty] of entries) {
         for (let i = 0; i < qty; i++) {
           await api.post("/cart/", { product_id: currentProduct.id, size: Number(size) });
         }
       }
     } else {
-      // Not logged in — queue it in the guest cart instead of blocking.
       entries.forEach(([size, qty]) => addToGuestCart(currentProduct.id, Number(size), qty));
     }
     msg.textContent = "Added to cart!";
@@ -232,10 +231,11 @@ async function loadRelatedProducts(p) {
       section.innerHTML = "";
       return;
     }
+    const brand = encodeURIComponent(p.brand || "");
     section.innerHTML = `
       <div class="section-heading">
         <h2>You may also like</h2>
-        <a href="products.html?brand=${p.brand}">View all &rarr;</a>
+        <a href="products.html?brand=${brand}">View all &rarr;</a>
       </div>
       <div class="product-grid">
         ${related.map(productCardHtml).join("")}

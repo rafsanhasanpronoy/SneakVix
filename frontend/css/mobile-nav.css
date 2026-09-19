@@ -1,0 +1,211 @@
+/* SneakVix mobile navigation: compact 3-dot drawer */
+
+.mobile-menu-toggle {
+    display: none;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    position: relative;
+    z-index: 1202;
+}
+
+.mobile-menu-toggle .close-icon { display: none; }
+.mobile-menu-toggle.open .menu-icon { display: none; }
+.mobile-menu-toggle.open .close-icon { display: block; }
+
+.mobile-nav-panel {
+    display: contents;
+}
+
+.mobile-nav-overlay {
+    display: none;
+}
+
+.mobile-menu-open {
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    header {
+        padding: 0.75rem 0;
+        position: relative;
+        z-index: 1200;
+    }
+
+    .header-flex {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 0;
+        position: relative;
+    }
+
+    .logo {
+        min-width: 0;
+    }
+
+    .logo img {
+        height: 38px;
+        max-width: 190px;
+    }
+
+    .mobile-menu-toggle {
+        display: flex;
+        margin-left: auto;
+    }
+
+    .mobile-nav-overlay {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1099;
+        background: rgba(0, 0, 0, 0.48);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+
+    .mobile-nav-overlay.open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .mobile-nav-panel {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 1100;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: min(84vw, 340px);
+        height: 100vh;
+        padding: 5.25rem 1.25rem 1.25rem;
+        gap: 1rem;
+        overflow: hidden;
+        overscroll-behavior: none;
+        background: var(--card);
+        border-left: 1px solid var(--card-border);
+        box-shadow: -18px 0 45px rgba(0, 0, 0, 0.35);
+        transform: translateX(105%);
+        visibility: hidden;
+        transition: transform 0.25s ease, visibility 0.25s ease;
+    }
+
+    .mobile-nav-panel.open {
+        transform: translateX(0);
+        visibility: visible;
+    }
+
+    .mobile-nav-panel .nav-links {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        width: 100%;
+    }
+
+    .mobile-nav-panel .nav-links a,
+    .mobile-nav-panel nav a {
+        display: block;
+        width: 100%;
+        margin: 0;
+        padding: 0.72rem 0.45rem;
+        border-bottom: 1px solid var(--card-border);
+        font-size: 0.9rem;
+        line-height: 1.2;
+    }
+
+    .mobile-nav-panel .nav-links a:first-child {
+        border-top: 1px solid var(--card-border);
+    }
+
+    .mobile-nav-panel nav a.active::after {
+        display: none;
+    }
+
+    .mobile-nav-panel .nav-links a.active {
+        color: var(--primary);
+    }
+
+    .mobile-nav-panel .header-search {
+        display: flex;
+        width: 100%;
+        flex: 0 0 auto;
+    }
+
+    .mobile-nav-panel .header-search input {
+        min-width: 0;
+    }
+
+    .mobile-nav-panel .nav-right {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 0.55rem;
+        padding-top: 0.8rem;
+        border-top: 1px solid var(--card-border);
+    }
+
+    .mobile-nav-panel .nav-right > * {
+        width: 100%;
+        margin: 0;
+        text-align: center;
+    }
+
+    .mobile-nav-panel .theme-toggle {
+        width: 40px;
+        height: 40px;
+        align-self: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-nav-panel .nav-signup,
+    .mobile-nav-panel .logout-btn,
+    .mobile-nav-panel .admin-link {
+        padding: 0.65rem 1rem;
+    }
+}
+
+@media (max-width: 420px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .logo img {
+        height: 34px;
+        max-width: 160px;
+    }
+
+    .mobile-menu-toggle {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+
+    .mobile-nav-panel {
+        width: min(88vw, 325px);
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .mobile-nav-panel .nav-links a,
+    .mobile-nav-panel nav a {
+        padding-top: 0.62rem;
+        padding-bottom: 0.62rem;
+    }
+}

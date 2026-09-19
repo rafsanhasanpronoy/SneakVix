@@ -4,15 +4,19 @@ const API_BASE = (() => {
   if (host === "localhost" || host === "127.0.0.1") {
     return "http://localhost:8000/api";
   }
-  // Set this to your deployed Django backend's real URL once it's live —
-  // see the deployment steps. Everything else in this file is unaffected.
-  return "https://YOUR-BACKEND-DOMAIN.onrender.com/api";
+  return "https://sneakvix.onrender.com/api";
+})();
+const MEDIA_BASE = (() => {
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") {
+    return "http://localhost:8000/media";
+  }
+  return "https://sneakvix.onrender.com/media";
 })();
 
 async function apiRequest(path, { method = "GET", body, auth = true, isForm = false } = {}) {
   const headers = {};
   if (!isForm) headers["Content-Type"] = "application/json";
-
   const token = localStorage.getItem("access");
   if (auth && token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -22,7 +26,6 @@ async function apiRequest(path, { method = "GET", body, auth = true, isForm = fa
     body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
   });
 
-  // Access token expired — try refreshing once, then retry the request.
   if (res.status === 401 && auth && localStorage.getItem("refresh")) {
     const refreshed = await tryRefresh();
     if (refreshed) {
@@ -83,14 +86,28 @@ function logout() {
 }
 
 function currentUser() {
-  const raw = localStorage.getItem("user");
-  return raw ? JSON.parse(raw) : null;
+  try {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function mediaUrl(path) {
   if (!path) return "";
-  if (/^https?:\/\//i.test(path)) return path; // already a full URL (e.g. Supabase Storage)
-  return `http://localhost:8000/media/${path}`;
+  if (/^https?:\/\//i.test(path)) return path;
+  const cleanPath = String(path).replace(/^\/+/, "");
+  return `${MEDIA_BASE}/${cleanPath}`;
 }
 
 function formatPrice(amount) {
@@ -98,32 +115,25 @@ function formatPrice(amount) {
   return "\u09F3 " + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Shared product-card markup used on the homepage, shop grid, image search
-// results, and "You may also like" — one place to change the card design.
-// Image and name link to the detail page; the button quick-adds to cart
-// (see the click-delegation handler further down this file).
 function productCardHtml(p) {
+  const name = escapeHtml(p.name);
+  const brand = escapeHtml(p.brand);
+  const image = escapeHtml(mediaUrl(p.image_main));
+  const id = encodeURIComponent(p.id);
   return `
     <div class="product-card">
-      <a class="product-card-media" href="product.html?id=${p.id}">
-        <img src="${mediaUrl(p.image_main)}" alt="${p.name}" />
+      <a class="product-card-media" href="product.html?id=${id}">
+        <img src="${image}" alt="${name}" />
       </a>
-      <span class="brand">${p.brand}</span>
-      <a class="product-card-title-link" href="product.html?id=${p.id}"><h3>${p.name}</h3></a>
+      <span class="brand">${brand}</span>
+      <a class="product-card-title-link" href="product.html?id=${id}"><h3>${name}</h3></a>
       <div class="price">${formatPrice(p.price)}</div>
-      <button type="button" class="quick-add-btn" data-product-id="${p.id}">
+      <button type="button" class="quick-add-btn" data-product-id="${escapeHtml(p.id)}">
         <span class="btn-label">Add to Cart</span>
       </button>
-    </div>
-  `;
+    </div>`;
 }
 
-// ---------------- Guest cart (localStorage) ----------------
-// Lets someone add to cart without an account. Items live entirely in the
-// browser as [{ product_id, size, quantity }, ...] until they log in, at
-// which point mergeGuestCartIntoServerCart() pushes them into the real
-// server-side cart and clears local storage. Checkout still requires login
-// (unchanged, enforced by the backend) — this only relaxes add-to-cart.
 const GUEST_CART_KEY = "sneakvix-guest-cart";
 
 function getGuestCart() {
@@ -141,11 +151,8 @@ function saveGuestCart(items) {
 function addToGuestCart(productId, size, qty = 1) {
   const items = getGuestCart();
   const existing = items.find((i) => i.product_id === productId && i.size === size);
-  if (existing) {
-    existing.quantity += qty;
-  } else {
-    items.push({ product_id: productId, size, quantity: qty });
-  }
+  if (existing) existing.quantity += qty;
+  else items.push({ product_id: productId, size, quantity: qty });
   saveGuestCart(items);
 }
 
@@ -163,20 +170,28 @@ function clearGuestCart() {
 
 async function mergeGuestCartIntoServerCart() {
   const items = getGuestCart();
-  if (items.length === 0) return;
+  if (!items.length) return;
+
+  const remaining = [];
   for (const item of items) {
-    try {
-      // POST adds one unit per call (see cart.js/product.js) — loop to
-      // match the quantity the guest had queued up.
-      for (let i = 0; i < item.quantity; i++) {
+    let mergedQuantity = 0;
+    for (let i = 0; i < item.quantity; i++) {
+      try {
         await api.post("/cart/", { product_id: item.product_id, size: item.size });
+        mergedQuantity += 1;
+      } catch {
+        break;
       }
-    } catch {
-      // e.g. it went out of stock while they were browsing as a guest —
-      // skip that one item rather than aborting the whole merge.
+    }
+
+    const unmergedQuantity = item.quantity - mergedQuantity;
+    if (unmergedQuantity > 0) {
+      remaining.push({ ...item, quantity: unmergedQuantity });
     }
   }
-  clearGuestCart();
+
+  if (remaining.length) saveGuestCart(remaining);
+  else clearGuestCart();
 }
 
 // Unified cart fetch — works for both logged-in (server /cart/) and guest
@@ -200,6 +215,7 @@ async function getUnifiedCartItems() {
   results.forEach((r, idx) => {
     if (r.status === "fulfilled") {
       const { gi, product: p } = r.value;
+      const sizeRow = (p.sizes || []).find((s) => Number(s.size) === Number(gi.size));
       items.push({
         id: `${gi.product_id}-${gi.size}`,
         product_id: gi.product_id,
@@ -208,6 +224,7 @@ async function getUnifiedCartItems() {
         product_image: p.image_main,
         size: gi.size,
         quantity: gi.quantity,
+        stock: sizeRow ? Number(sizeRow.stock) : 0,
       });
       stillValid.push(guestItems[idx]);
     }
@@ -276,21 +293,18 @@ async function handleQuickAddClick(btn) {
   const label = btn.querySelector(".btn-label");
   const originalText = label ? label.textContent : "Add to Cart";
   if (label) label.textContent = "Loading...";
-
   try {
     const productId = Number(btn.dataset.productId);
     const p = await api.get(`/products/${productId}/`);
-    if (!p.sizes || p.sizes.length === 0) {
+    const availableSizes = (p.sizes || []).filter((s) => Number(s.stock) > 0);
+    if (!availableSizes.length) {
       if (label) label.textContent = "Out of stock";
-      setTimeout(() => {
-        if (label) label.textContent = originalText;
-      }, 1400);
-    } else if (p.sizes.length === 1) {
-      // Only one size in stock — skip the picker, add it directly.
-      await addQuickItem(productId, p.sizes[0].size);
+      setTimeout(() => { if (label) label.textContent = originalText; }, 1400);
+    } else if (availableSizes.length === 1) {
+      await addQuickItem(productId, availableSizes[0].size);
       showAddedAnimation(btn, originalText);
     } else {
-      showSizeChips(btn, productId, p.sizes, originalText);
+      showSizeChips(btn, productId, availableSizes, originalText);
     }
   } catch {
     if (label) label.textContent = originalText;
@@ -303,11 +317,7 @@ function showSizeChips(btn, productId, sizes, originalText) {
   btn.classList.add("size-mode");
   btn.dataset.originalText = originalText;
   btn.dataset.productId = productId;
-  btn.innerHTML = `
-    <div class="quick-size-chips">
-      ${sizes.map((s) => `<button type="button" class="quick-size-chip" data-size="${s.size}">${s.size}</button>`).join("")}
-    </div>
-  `;
+  btn.innerHTML = `<div class="quick-size-chips">${sizes.map((s) => `<button type="button" class="quick-size-chip" data-size="${escapeHtml(s.size)}">${escapeHtml(s.size)}</button>`).join("")}</div>`;
 }
 
 async function handleQuickSizePick(chip) {
@@ -317,20 +327,20 @@ async function handleQuickSizePick(chip) {
   const productId = Number(btn.dataset.productId);
   const size = Number(chip.dataset.size);
   const originalText = btn.dataset.originalText || "Add to Cart";
-
-  await addQuickItem(productId, size);
-  showAddedAnimation(btn, originalText);
-  delete btn.dataset.busy;
+  try {
+    await addQuickItem(productId, size);
+    showAddedAnimation(btn, originalText);
+  } catch {
+    btn.classList.remove("size-mode");
+    btn.innerHTML = `<span class="btn-label">${escapeHtml(originalText)}</span>`;
+  } finally {
+    delete btn.dataset.busy;
+  }
 }
 
 async function addQuickItem(productId, size) {
   if (isLoggedIn()) {
-    try {
-      await api.post("/cart/", { product_id: productId, size });
-    } catch {
-      // stock may have changed between fetch and click; silently ignore
-      // here since the size picker already reflected sizes as of the fetch
-    }
+    await api.post("/cart/", { product_id: productId, size });
   } else {
     addToGuestCart(productId, size, 1);
   }
@@ -341,10 +351,10 @@ async function addQuickItem(productId, size) {
 function showAddedAnimation(btn, originalText) {
   btn.classList.remove("size-mode");
   btn.classList.add("added-flash");
-  btn.innerHTML = `<span class="btn-label">\u2713 Added!</span>`;
+  btn.innerHTML = `<span class="btn-label">✓ Added!</span>`;
   setTimeout(() => {
     btn.classList.remove("added-flash");
-    btn.innerHTML = `<span class="btn-label">${originalText}</span>`;
+    btn.innerHTML = `<span class="btn-label">${escapeHtml(originalText)}</span>`;
   }, 1300);
 }
 

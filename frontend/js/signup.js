@@ -1,7 +1,21 @@
 // signup.js
+function getSafeNextUrl(rawNext) {
+  if (!rawNext) return "index.html";
+  try {
+    const url = new URL(rawNext, window.location.origin);
+    // Only allow same-origin relative navigation to an HTML page.
+    if (url.origin !== window.location.origin) return "index.html";
+    if (!url.pathname || !url.pathname.endsWith(".html")) return "index.html";
+    return `${url.pathname.replace(/^\//, "")}${url.search}${url.hash}`;
+  } catch {
+    return "index.html";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  const next = new URLSearchParams(window.location.search).get("next");
-  if (next) {
+  const rawNext = new URLSearchParams(window.location.search).get("next");
+  const next = getSafeNextUrl(rawNext);
+  if (rawNext && next !== "index.html") {
     const loginLink = document.querySelector('a[href="login.html"]');
     if (loginLink) loginLink.href = `login.html?next=${encodeURIComponent(next)}`;
   }
@@ -22,8 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       await mergeGuestCartIntoServerCart();
 
-      const next = new URLSearchParams(window.location.search).get("next");
-      window.location.href = next || "index.html";
+      window.location.href = next;
     } catch (err) {
       const data = err.data || {};
       errorEl.textContent = Object.values(data).flat().join(" ") || "Could not sign up.";

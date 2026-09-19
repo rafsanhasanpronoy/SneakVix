@@ -1,7 +1,22 @@
 // login.js
+function getSafeNextUrl(rawNext) {
+  if (!rawNext) return "index.html";
+  try {
+    const url = new URL(rawNext, window.location.origin);
+    // Only allow same-origin relative navigation. Reject protocol-relative,
+    // external, javascript:, data:, and other open-redirect targets.
+    if (url.origin !== window.location.origin) return "index.html";
+    if (!url.pathname || !url.pathname.endsWith(".html")) return "index.html";
+    return `${url.pathname.replace(/^\//, "")}${url.search}${url.hash}`;
+  } catch {
+    return "index.html";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-  const next = new URLSearchParams(window.location.search).get("next");
-  if (next) {
+  const rawNext = new URLSearchParams(window.location.search).get("next");
+  const next = getSafeNextUrl(rawNext);
+  if (rawNext && next !== "index.html") {
     const signupLink = document.querySelector('a[href="signup.html"]');
     if (signupLink) signupLink.href = `signup.html?next=${encodeURIComponent(next)}`;
   }
@@ -23,8 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       await mergeGuestCartIntoServerCart();
 
-      const next = new URLSearchParams(window.location.search).get("next");
-      window.location.href = next || "index.html";
+      window.location.href = next;
     } catch {
       errorEl.textContent = "Invalid username or password.";
     }
