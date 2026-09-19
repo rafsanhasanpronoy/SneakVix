@@ -1339,3 +1339,84 @@ input:focus {
 
 .size-picker-row.is-out-of-stock { opacity: 0.5; }
 .size-picker-stock.out { color: var(--danger); }
+
+/* ==================== RESPONSIVE UI HARDENING ==================== */
+html, body { max-width: 100%; overflow-x: hidden; }
+img, video, canvas { max-width: 100%; }
+button, input, select, textarea { max-width: 100%; }
+.container { width: 100%; }
+
+@media (max-width: 992px) {
+    .shop-layout { grid-template-columns: 1fr !important; }
+    .shop-filters { width: 100%; }
+    .checkout-layout { grid-template-columns: 1fr !important; }
+    .product-detail-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .container { padding-left: 1rem; padding-right: 1rem; }
+    main { padding-bottom: 2.5rem; }
+    h1 { font-size: clamp(1.8rem, 7vw, 2.5rem); }
+    h2 { font-size: clamp(1.5rem, 6vw, 2rem); }
+
+    .shop-toolbar { display: flex; flex-direction: column; align-items: stretch; gap: .8rem; }
+    .shop-search, .shop-sort { width: 100%; }
+    .shop-sort { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .6rem; }
+    .shop-sort select { min-width: 0; }
+
+    .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 1rem; margin: 1.5rem 0; }
+    .product-card img { height: auto; aspect-ratio: 1 / 1; padding: 1rem; }
+    .product-card h3 { font-size: 1rem; padding-left: .9rem; padding-right: .9rem; }
+    .product-card .brand { padding-left: .9rem; padding-right: .9rem; }
+    .product-card .price { padding-left: .9rem; padding-right: .9rem; }
+    .quick-add-btn { width: calc(100% - 1.8rem); margin-left: .9rem; margin-right: .9rem; }
+
+    .cart-table { display: block; }
+    .cart-table tbody, .cart-table tr { display: block; width: 100%; }
+    .cart-table tr { padding: .8rem; margin-bottom: .8rem; }
+    .cart-table td { display: grid; grid-template-columns: minmax(72px, 34%) 1fr; gap: .7rem; padding: .55rem .4rem; text-align: left !important; border-radius: 0 !important; }
+    .cart-table td::before { content: attr(data-label); font-weight: 600; color: var(--text-light); }
+    .cart-table td:first-child::before { content: ''; }
+    .cart-table td.qty { text-align: left; }
+    .cart-table td:first-child { display: block; }
+    .cart-table td:first-child img { max-width: 90px; }
+    .qty-input { width: 100% !important; max-width: 110px; }
+    .remove-btn { justify-self: start; }
+
+    .form-row-2 { grid-template-columns: 1fr !important; }
+    .checkout-layout { gap: 1.2rem; }
+    .order-summary-card { position: static !important; }
+    .checkout-input { font-size: 16px; }
+
+    .product-hero-img { width: 100%; }
+    .product-detail-grid { gap: 1.5rem; margin: 1.5rem 0; }
+    .related-products .product-grid { margin-top: 1rem; }
+
+    .img-search-hero-inner { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+    .img-search-title { font-size: clamp(2rem, 10vw, 3.2rem); }
+    .img-search-section { padding-top: 1.5rem; }
+    .img-drop-zone { min-height: 240px; }
+    .img-search-submit { width: 100%; }
+
+    .auth-card { padding: 1.5rem 1rem; }
+    .auth-page .container { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+
+    footer { margin-top: 3rem; padding-top: 2.5rem; }
+    .footer-grid { grid-template-columns: 1fr !important; gap: 1.5rem; }
+    .footer-bottom { text-align: center; padding-top: 1rem; }
+}
+
+@media (max-width: 480px) {
+    .container { padding-left: .85rem; padding-right: .85rem; }
+    .product-grid { grid-template-columns: 1fr !important; }
+    .product-card img { max-height: 320px; }
+    .shop-sort { grid-template-columns: 1fr; }
+    .shop-sort label { font-size: .8rem; }
+    .price-range-inputs { grid-template-columns: 1fr !important; }
+    .price-range-inputs span { display: none; }
+    .btn, .btn-outline { white-space: normal; min-height: 44px; }
+    .hero-slider { height: 72vw; min-height: 260px; }
+    .hero-content { left: 6%; right: 6%; bottom: 17%; max-width: none; }
+    .hero-cta { margin-top: 1rem; padding: .7rem 1.2rem; }
+    .img-search-card { padding: 1rem !important; }
+}
