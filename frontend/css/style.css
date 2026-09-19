@@ -840,7 +840,8 @@ input:focus {
 }
 @media (max-width: 900px) {
     .checkout-layout { grid-template-columns: 1fr; }
-    .checkout-layout > div:last-child { display: none; }
+    .checkout-layout > div:last-child { display: block; }
+    .order-summary-card { position: static; margin-top: 0; }
 }
 
 .checkout-section {
@@ -1419,4 +1420,28 @@ button, input, select, textarea { max-width: 100%; }
     .hero-content { left: 6%; right: 6%; bottom: 17%; max-width: none; }
     .hero-cta { margin-top: 1rem; padding: .7rem 1.2rem; }
     .img-search-card { padding: 1rem !important; }
+}
+
+
+/* Compact shop search control */
+.shop-search {
+    height: 44px;
+    flex: 0 1 300px;
+    max-width: 300px;
+}
+.shop-search input {
+    height: 40px;
+    padding: 0.45rem 0;
+}
+.shop-search button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+}
+@media (max-width: 768px) {
+    .shop-search {
+        flex: 1 1 100%;
+        max-width: none;
+        height: 44px;
+    }
 }
