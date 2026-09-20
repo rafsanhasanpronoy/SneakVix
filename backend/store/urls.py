@@ -17,6 +17,7 @@ urlpatterns = [
     path("auth/me/", views.MeView.as_view()),
     path("checkout/", views.CheckoutView.as_view()),
     path("orders/", views.OrderListView.as_view()),
+    path("orders/<int:order_id>/cancel/", views.CancelOrderView.as_view()),
     path("image-search/", views.ImageSearchView.as_view()),
     path("", include(router.urls)),
 ]
