@@ -48,6 +48,13 @@ async function apiRequest(path, { method = "GET", body, auth = true, isForm = fa
     throw error;
   }
   return data;
+  } catch (networkError) {
+    const error = new Error("Unable to connect to the server. Please try again.");
+    error.data = { error: error.message };
+    error.status = 0;
+    error.isNetworkError = true;
+    throw error;
+  }
 }
 
 async function tryRefresh() {
