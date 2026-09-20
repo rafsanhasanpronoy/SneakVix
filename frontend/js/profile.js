@@ -58,6 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <span class="order-status ${o.status}">${o.status}</span>
                 <span class="order-amt">${formatPrice(o.total_amount)}</span>
                 ${o.status === "pending" ? `<button type="button" class="btn-outline cancel-order-btn" data-order-id="${o.id}">Cancel Order</button>` : ""}
+                <button type="button" class="btn-outline receipt-btn" data-order-id="${o.id}">Receipt</button>
               </div>
             `
                     )
@@ -69,6 +70,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
     
+    document.querySelectorAll(".receipt-btn").forEach((button) => { button.addEventListener("click", async () => { try { const order = await api.get(`/orders/${button.dataset.orderId}/`); printReceipt(order, "normal"); } catch { showToast("Could not load the receipt.", "error"); } }); });
+
     document.querySelectorAll(".cancel-order-btn").forEach((button) => {
       button.addEventListener("click", async () => {
         const orderId = button.dataset.orderId;
