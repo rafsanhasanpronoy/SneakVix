@@ -189,7 +189,8 @@ class CheckoutView(APIView):
                     stock__gte=i.quantity,
                 ).update(stock=F("stock") - i.quantity)
                 if updated != 1:
-                    raise ValidationError({"stock": f"Insufficient stock for {i.product.name}, size {i.size}."})
+                    available = ProductSize.objects.filter(product=i.product, size=i.size).values_list("stock", flat=True).first() or 0
+                    raise ValidationError({"stock": f"Only {available} items are available."})
 
                 OrderItem.objects.create(
                     order=order, product=i.product, size=i.size,
