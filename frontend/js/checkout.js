@@ -118,7 +118,10 @@ function showOrderSuccess(order) {
         }
       </p>
 
-      <a href="index.html" class="btn btn-primary large">Continue Shopping</a>
+      <div class="success-actions">
+        <a href="index.html" class="btn btn-primary large">Continue Shopping</a>
+        <a href="profile.html" class="btn-outline large">Track Order</a>
+      </div>
     </div>
   `;
 }
