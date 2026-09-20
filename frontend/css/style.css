@@ -1724,3 +1724,29 @@ button, input, select, textarea { max-width: 100%; }
   .checkout-progress-step span { width:26px; height:26px; }
   .applied-filters { align-items:flex-start; flex-direction:column; }
 }
+
+/* Cart hover visibility fix */
+#cartCountLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .45rem .7rem;
+  border-radius: 7px;
+  transition: background-color .2s ease, color .2s ease;
+}
+#cartCountLink:hover,
+#cartCountLink:focus-visible {
+  background: var(--card) !important;
+  color: var(--text) !important;
+  opacity: 1;
+  outline: none;
+}
+.checkout-progress-step.is-complete strong,
+.checkout-progress-step.is-active strong {
+  color: var(--text);
+  opacity: 1;
+}
+.checkout-progress-step.is-complete,
+.checkout-progress-step.is-active {
+  opacity: 1;
+}
