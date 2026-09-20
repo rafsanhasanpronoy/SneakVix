@@ -57,6 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
                 <span class="order-status ${o.status}">${o.status}</span>
                 <span class="order-amt">${formatPrice(o.total_amount)}</span>
+                ${o.status === "pending" ? `<button type="button" class="btn-outline cancel-order-btn" data-order-id="${o.id}">Cancel Order</button>` : ""}
               </div>
             `
                     )
@@ -66,6 +67,29 @@ document.addEventListener("DOMContentLoaded", async () => {
         </div>
       </div>
     `;
+
+    
+    document.querySelectorAll(".cancel-order-btn").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const orderId = button.dataset.orderId;
+        openConfirmModal({
+          title: "Cancel Order?",
+          message: "This will cancel the order and return the reserved items to stock.",
+          confirmLabel: "Cancel Order",
+          danger: true,
+          onConfirm: async () => {
+            button.disabled = true;
+            try {
+              await api.post(`/orders/${orderId}/cancel/`);
+              window.location.reload();
+            } catch (err) {
+              showToast((err.data && err.data.error) || err.message || "Could not cancel the order.", "error");
+              button.disabled = false;
+            }
+          },
+        });
+      });
+    });
 
     document.getElementById("signoutLink").addEventListener("click", (e) => {
       e.preventDefault();
