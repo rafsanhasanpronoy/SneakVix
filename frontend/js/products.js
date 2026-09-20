@@ -31,6 +31,41 @@ function applyStateToControls(state) {
   });
 }
 
+
+function filterLabel(value) {
+  const labels = { nike: "Nike", adidas: "Adidas", puma: "Puma", new_balance: "New Balance", other: "Other" };
+  return labels[value] || value;
+}
+
+function renderAppliedFilters(state) {
+  const el = document.getElementById("appliedFilters");
+  if (!el) return;
+  const filters = [];
+  state.brands.forEach((brand) => filters.push({ type: "brand", value: brand, label: filterLabel(brand) }));
+  if (state.search) filters.push({ type: "search", value: state.search, label: "Search: " + state.search });
+  if (state.minPrice) filters.push({ type: "min_price", value: state.minPrice, label: "Min: ৳" + state.minPrice });
+  if (state.maxPrice) filters.push({ type: "max_price", value: state.maxPrice, label: "Max: ৳" + state.maxPrice });
+
+  if (!filters.length) { el.innerHTML = ""; return; }
+  el.innerHTML = '<div class="applied-filters-label">Applied Filters:</div><div class="applied-filter-list">' +
+    filters.map((f) => '<button type="button" class="applied-filter" data-type="' + escapeHtml(f.type) + '" data-value="' + escapeHtml(f.value) + '">' + escapeHtml(f.label) + ' <span aria-hidden="true">×</span></button>').join("") +
+    '<button type="button" class="clear-applied-filters" id="clearAppliedFilters">Clear All Filters</button></div>';
+
+  document.querySelectorAll(".applied-filter").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const type = btn.dataset.type;
+      if (type === "brand") {
+        const cb = Array.from(document.querySelectorAll(".brandFilter")).find((item) => item.value === btn.dataset.value);
+        if (cb) cb.checked = false;
+      } else if (type === "search") document.getElementById("shopSearchInput").value = "";
+      else if (type === "min_price") document.getElementById("minPrice").value = "";
+      else if (type === "max_price") document.getElementById("maxPrice").value = "";
+      loadProducts(true);
+    });
+  });
+  document.getElementById("clearAppliedFilters")?.addEventListener("click", clearFilters);
+}
+
 function readControlsToState() {
   return {
     search: document.getElementById("shopSearchInput").value.trim(),
@@ -43,6 +78,7 @@ function readControlsToState() {
 
 async function loadProducts(pushHistory = false) {
   const state = readControlsToState();
+  renderAppliedFilters(state);
   const params = stateToParams(state);
 
   if (pushHistory) {
