@@ -20,40 +20,41 @@ async function apiRequest(path, { method = "GET", body, auth = true, isForm = fa
   const token = localStorage.getItem("access");
   if (auth && token) headers["Authorization"] = `Bearer ${token}`;
 
-  let res;
   try {
-    res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
-  });
+    let res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
+    });
 
-  if (res.status === 401 && auth && localStorage.getItem("refresh")) {
-    const refreshed = await tryRefresh();
-    if (refreshed) {
-      headers["Authorization"] = `Bearer ${localStorage.getItem("access")}`;
-      res = await fetch(`${API_BASE}${path}`, {
-        method,
-        headers,
-        body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
-      });
+    if (res.status === 401 && auth && localStorage.getItem("refresh")) {
+      const refreshed = await tryRefresh();
+      if (refreshed) {
+        headers["Authorization"] = `Bearer ${localStorage.getItem("access")}`;
+        res = await fetch(`${API_BASE}${path}`, {
+          method,
+          headers,
+          body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
+        });
+      }
     }
-  }
 
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    const error = new Error(data.error || data.detail || "Request failed");
-    error.data = data;
-    error.status = res.status;
-    throw error;
-  }
-  return data;
-  } catch (networkError) {
-    const error = new Error("Unable to connect to the server. Please try again.");
-    error.data = { error: error.message };
-    error.status = 0;
-    error.isNetworkError = true;
-    throw error;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const error = new Error(data.error || data.detail || "Request failed");
+      error.data = data;
+      error.status = res.status;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    if (error && error.status) throw error;
+    const networkError = new Error("Unable to connect to the server. Please try again.");
+    networkError.data = { error: networkError.message };
+    networkError.status = 0;
+    networkError.isNetworkError = true;
+    throw networkError;
   }
 }
 
