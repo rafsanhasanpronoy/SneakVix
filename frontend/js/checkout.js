@@ -162,4 +162,8 @@ function showOrderSuccess(order) {
       </div>
     </div>
   `;
-}
+  
+  document.getElementById("printNormalReceiptBtn")?.addEventListener("click", () => printReceipt(order, "normal"));
+  document.getElementById("printPosReceiptBtn")?.addEventListener("click", () => printReceipt(order, "pos"));
+  document.getElementById("downloadReceiptBtn")?.addEventListener("click", () => downloadReceipt(order, "normal"));
+}}
