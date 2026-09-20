@@ -211,6 +211,32 @@ class CheckoutView(APIView):
         return Response(response_data, status=201)
 
 
+class CancelOrderView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id, user=request.user)
+
+        if order.status != "pending":
+            return Response(
+                {"error": "This order cannot be cancelled."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            items = list(order.items.select_related("product"))
+            for item in items:
+                ProductSize.objects.filter(
+                    product=item.product,
+                    size=item.size,
+                ).update(stock=F("stock") + item.quantity)
+
+            order.status = "cancelled"
+            order.save(update_fields=["status", "updated_at"])
+
+        return Response(OrderSerializer(order).data)
+
+
 class OrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
