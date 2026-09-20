@@ -35,7 +35,7 @@ async function showTotals() {
       <span class="total-amount">${formatPrice(total)}</span>
     </div>
   `;
-  // Payment UI is bound after the order is created in showOrderSuccess().
+
   document.getElementById("printNormalReceiptBtn")?.addEventListener("click", () => printReceipt(order, "normal"));
   document.getElementById("printPosReceiptBtn")?.addEventListener("click", () => printReceipt(order, "pos"));
   document.getElementById("downloadReceiptBtn")?.addEventListener("click", () => downloadReceipt(order, "normal"));
@@ -136,12 +136,12 @@ function showOrderSuccess(order) {
           </form>
           <ol class="bkash-steps">
             <li>Open bKash &rarr; tap <strong>Send Money</strong></li>
-            <li>Enter number: <strong>${escapeHtml(bkashNumber)}</strong></li>
-            <li>Amount: <strong>${formatPrice(bkashAmount)}</strong></li>
-            <li>Keep the bKash transaction ID; you will submit it below.</li>
-            <li>Complete payment</li>
+            <li>Send <strong>${formatPrice(bkashAmount)}</strong> to <strong>${escapeHtml(bkashNumber)}</strong>.</li>
+            <li>Complete the bKash payment and wait for the successful confirmation.</li>
+            <li>Copy the bKash <strong>Transaction ID</strong> from the confirmation message.</li>
+            <li>Paste the Transaction ID into the field above and tap <strong>Submit Payment</strong>.</li>
           </ol>
-          <div class="bkash-warning">Order will only be processed after bKash payment is verified.</div>
+          <div class="bkash-warning"><strong>Important:</strong> Pay first. Only after the payment succeeds should you enter and submit the transaction ID. Your order will be processed after the payment is verified.</div>
         </div>
       </div>
 
