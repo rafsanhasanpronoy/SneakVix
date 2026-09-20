@@ -4,7 +4,7 @@ SneakVix is a full-stack sneaker e-commerce platform with a static frontend, Dja
 
 ## Live Application
 
-- **Frontend:** https://sneakvix.netlify.app
+- **Frontend:** (https://sneakvix-frontend.onrender.com/)
 - **Backend API:** https://sneakvix.onrender.com
 - **API base URL:** `https://sneakvix.onrender.com/api`
 - **Database:** PostgreSQL hosted by Supabase
