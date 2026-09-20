@@ -20,7 +20,7 @@ async function apiRequest(path, { method = "GET", body, auth = true, isForm = fa
   const token = localStorage.getItem("access");
   if (auth && token) headers["Authorization"] = `Bearer ${token}`;
 
-  let res = await fetch(`${API_BASE}${path}`, {
+  let res;\n  try {\n    res = await fetch(`${API_BASE}${path}`, {
     method,
     headers,
     body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
@@ -72,6 +72,24 @@ const api = {
   patch: (path, body) => apiRequest(path, { method: "PATCH", body }),
   del: (path) => apiRequest(path, { method: "DELETE" }),
 };
+
+function formatApiError(data) {
+  const payload = data || {};
+  const parts = [];
+  for (const [field, value] of Object.entries(payload)) {
+    const messages = Array.isArray(value) ? value : [value];
+    const text = messages
+      .map((message) => (typeof message === "object" ? JSON.stringify(message) : String(message)))
+      .join(" ");
+    if (!text) continue;
+    if (field === "error" || field === "detail" || field === "non_field_errors") {
+      parts.push(escapeHtml(text));
+    } else {
+      parts.push(`<strong>${escapeHtml(field.replace(/_/g, " "))}:</strong> ${escapeHtml(text)}`);
+    }
+  }
+  return parts.join("<br>") || "Something went wrong.";
+}
 
 function isLoggedIn() {
   return !!localStorage.getItem("access");
