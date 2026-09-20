@@ -321,3 +321,6 @@ body.admin-menu-open { overflow: hidden; }
     #orderSearch, #userSearch { max-width: none !important; flex: 1 1 100%; }
     #statusFilter, #orderSort { flex: 1 1 auto; }
 }
+
+/* Payment/order status refinements */
+.badge-refunded { background: rgba(168, 85, 247, 0.14); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.28); }
