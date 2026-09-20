@@ -1795,3 +1795,16 @@ button, input, select, textarea { max-width: 100%; }
 @media(max-width:980px){.recent-order-item{grid-template-columns:1fr auto}.order-payment{grid-column:1/-1}.order-actions{grid-column:1/-1;justify-content:flex-start}}
 @media(max-width:860px){.profile-layout{grid-template-columns:1fr}.profile-sidebar{position:static}.profile-nav{display:flex;gap:.4rem}.profile-nav li+li{margin-top:0}.profile-nav a{padding:.55rem .7rem}.profile-signout{margin-top:.8rem}.profile-card-heading{align-items:flex-start}}
 @media(max-width:560px){.profile-stats{grid-template-columns:repeat(3,1fr)}.profile-stat-card{padding:.85rem .65rem}.profile-stat-value{font-size:1.15rem}.profile-stat-label{font-size:.63rem}.recent-order-item{grid-template-columns:1fr}.order-middle{justify-content:space-between}.order-actions{justify-content:flex-start}.profile-main-card{padding:1rem}}
+
+
+/* ---- Payment status / awaiting-payment UX ---- */
+.order-payment-prompt { grid-column: 1 / -1; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:10px 12px; border:1px solid rgba(255,255,255,.10); border-radius:10px; background:rgba(255,255,255,.035); font-size:.86rem; }
+.order-payment-prompt strong { flex:0 0 auto; }
+.order-payment-prompt span { color:var(--text-light); flex:1 1 260px; }
+.order-payment-prompt.is-submitted { border-color:rgba(234,179,8,.28); }
+.order-payment-prompt.is-verified { border-color:rgba(34,197,94,.28); }
+.order-payment-prompt.is-rejected { border-color:rgba(239,68,68,.28); }
+.profile-payment-steps { display:grid; gap:9px; margin:14px 0; }
+.profile-payment-steps div { display:grid; gap:2px; padding:10px 12px; border-radius:9px; background:rgba(255,255,255,.045); }
+.profile-payment-steps span { color:var(--text-light,#aaa); font-size:.88rem; line-height:1.45; }
+@media (max-width:600px) { .order-payment-prompt { align-items:flex-start; } .order-payment-prompt .btn-outline { width:100%; } }
