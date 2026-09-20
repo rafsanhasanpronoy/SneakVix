@@ -228,18 +228,23 @@ class SubmitPaymentView(APIView):
 
     def post(self, request, order_id):
         order = get_object_or_404(Order, id=order_id, user=request.user)
-        if order.status != "pending":
-            return Response({"error": "Payment can only be submitted for a pending order."}, status=400)
         serializer = PaymentSubmitSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
+        reference = data["reference"].strip().upper()
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(pk=order.pk)
+            if order.status != "pending":
+                return Response({"error": "Payment can only be submitted for a pending order."}, status=400)
+            if hasattr(order, "payment"):
+                return Response({"error": "Payment has already been submitted for this order."}, status=409)
         if data["amount"] != order.total_amount:
             return Response({"error": "Payment amount must exactly match the order total."}, status=400)
-        if Payment.objects.filter(reference__iexact=data["reference"]).exists():
+        if Payment.objects.filter(reference=reference).exists():
             return Response({"error": "This payment reference has already been used."}, status=409)
         try:
             with transaction.atomic():
-                payment = Payment.objects.create(order=order, reference=data["reference"], amount=data["amount"])
+                payment = Payment.objects.create(order=order, reference=reference, amount=data["amount"])
 
         except IntegrityError:
             return Response({"error": "This payment reference has already been used."}, status=409)
