@@ -271,24 +271,48 @@ class AdminVerifyPaymentView(APIView):
     permission_classes = [IsAdmin]
 
     def post(self, request, order_id):
-        order = get_object_or_404(Order, id=order_id)
-        payment = getattr(order, "payment", None)
-        if not payment or payment.status != "submitted":
-            return Response({"error": "There is no pending payment to verify."}, status=400)
-        if order.status != "pending":
-            return Response({"error": "This order is no longer awaiting payment verification."}, status=400)
         with transaction.atomic():
+            order = get_object_or_404(Order.objects.select_for_update(), id=order_id)
+            payment = getattr(order, "payment", None)
+            if not payment or payment.status != "submitted":
+                return Response({"error": "There is no pending payment to verify."}, status=400)
+            if order.status != "pending":
+                return Response({"error": "This order is no longer awaiting payment verification."}, status=400)
+
             payment.status = "verified"
             payment.verified_at = timezone.now()
             payment.save(update_fields=["status", "verified_at"])
             order.status = "paid"
             order.save(update_fields=["status", "updated_at"])
+
         try:
             send_order_status_email(order, "paid")
         except Exception:
             logger.exception("Payment verification email failed for order %s", order.id)
         return Response(OrderSerializer(order).data)
 
+
+class AdminRejectPaymentView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request, order_id):
+        with transaction.atomic():
+            order = get_object_or_404(Order.objects.select_for_update(), id=order_id)
+            payment = getattr(order, "payment", None)
+            if not payment or payment.status != "submitted":
+                return Response({"error": "There is no submitted payment to reject."}, status=400)
+            if order.status != "pending":
+                return Response({"error": "This order is no longer awaiting payment verification."}, status=400)
+
+            payment.status = "rejected"
+            payment.verified_at = None
+            payment.save(update_fields=["status", "verified_at"])
+
+        try:
+            send_order_status_email(order, "pending")
+        except Exception:
+            logger.exception("Payment rejection email failed for order %s", order.id)
+        return Response(OrderSerializer(order).data)
 
 class CancelOrderView(APIView):
     permission_classes = [permissions.IsAuthenticated]
