@@ -70,7 +70,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
     
-    document.querySelectorAll(".receipt-btn").forEach((button) => { button.addEventListener("click", async () => { try { const order = await api.get(`/orders/${button.dataset.orderId}/`); printReceipt(order, "normal"); } catch { showToast("Could not load the receipt.", "error"); } }); });
+    document.querySelectorAll(".receipt-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const order = orders.find((item) => String(item.id) === String(button.dataset.orderId));
+        if (!order) {
+          window.alert("Could not load the receipt.");
+          return;
+        }
+        printReceipt(order, "normal");
+      });
+    });
 
     document.querySelectorAll(".cancel-order-btn").forEach((button) => {
       button.addEventListener("click", async () => {
@@ -86,7 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               await api.post(`/orders/${orderId}/cancel/`);
               window.location.reload();
             } catch (err) {
-              showToast((err.data && err.data.error) || err.message || "Could not cancel the order.", "error");
+              window.alert((err.data && err.data.error) || err.message || "Could not cancel the order.");
               button.disabled = false;
             }
           },
