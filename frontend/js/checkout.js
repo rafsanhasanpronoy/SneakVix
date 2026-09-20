@@ -35,8 +35,33 @@ async function showTotals() {
       <span class="total-amount">${formatPrice(total)}</span>
     </div>
   `;
+  bindPaymentSubmission(order);
 }
 
+function bindPaymentSubmission(order) {
+  const form = document.getElementById("paymentSubmitForm");
+  if (!form) return;
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const button = document.getElementById("submitPaymentBtn");
+    const error = document.getElementById("paymentSubmitError");
+    const success = document.getElementById("paymentSubmitSuccess");
+    error.style.display = "none";
+    button.disabled = true;
+    try {
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.amount = Number(data.amount);
+      await api.post("/orders/" + order.id + "/payment/", data);
+      form.querySelectorAll("input, button").forEach((el) => { el.disabled = true; });
+      success.style.display = "block";
+      success.textContent = "Payment submitted successfully. It will be verified by an administrator before processing.";
+    } catch (err) {
+      error.innerHTML = formatApiError(err.data || { error: err.message || "Could not submit payment." });
+      error.style.display = "block";
+      button.disabled = false;
+    }
+  });
+}
 document.addEventListener("DOMContentLoaded", () => {
   requireLogin();
   showTotals();
@@ -97,13 +122,20 @@ function showOrderSuccess(order) {
           <table class="bkash-table">
             <tr><td>bKash Number</td><td>${escapeHtml(bkashNumber)}</td></tr>
             <tr><td>Amount</td><td>${formatPrice(bkashAmount)}</td></tr>
-            <tr class="ref-row"><td>Reference (Required)</td><td>#${escapeHtml(paddedId)}</td></tr>
           </table>
+          <form id="paymentSubmitForm" class="payment-submit-form">
+            <label for="paymentReference">bKash Transaction ID / Reference</label>
+            <input id="paymentReference" name="reference" class="form-input" required minlength="4" maxlength="100" placeholder="Enter your bKash transaction ID" autocomplete="off" />
+            <input type="hidden" name="amount" value="${bkashAmount}" />
+            <button type="submit" id="submitPaymentBtn" class="btn btn-primary">Submit Payment</button>
+            <div id="paymentSubmitError" class="error" style="display:none;"></div>
+            <div id="paymentSubmitSuccess" class="payment-submit-success" style="display:none;">Payment submitted. It will be verified by an administrator before processing.</div>
+          </form>
           <ol class="bkash-steps">
             <li>Open bKash &rarr; tap <strong>Send Money</strong></li>
             <li>Enter number: <strong>${escapeHtml(bkashNumber)}</strong></li>
             <li>Amount: <strong>${formatPrice(bkashAmount)}</strong></li>
-            <li>Reference: <strong>#${escapeHtml(paddedId)}</strong></li>
+            <li>Keep the bKash transaction ID; you will submit it below.</li>
             <li>Complete payment</li>
           </ol>
           <div class="bkash-warning">Order will only be processed after bKash payment is verified.</div>
