@@ -1,6 +1,7 @@
 // admin-orders.js — order list with search, status filter, sort, a quick
 // per-row status dropdown, and a link into the full order-detail page.
-const STATUSES = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
+const STATUSES = ["pending", "paid", "processing", "shipped", "delivered", "cancelled", "refunded"];
+const STATUS_TRANSITIONS = { pending: ["cancelled"], paid: ["processing", "refunded"], processing: ["shipped"], shipped: ["delivered"], delivered: [], cancelled: [], refunded: [] };
 const STATUS_BADGE = {
   pending: "badge-pending",
   paid: "badge-paid",
@@ -77,16 +78,25 @@ async function loadOrders(pushHistory = false) {
         <td style="color:#aaa;font-size:13px;">${new Date(o.created_at).toLocaleDateString()}</td>
         <td>
           <select class="form-select status-select" data-id="${o.id}" style="width:auto;padding:6px 10px;font-size:12.5px;">
-            ${STATUSES.map((s) => `<option value="${s}" ${s === o.status ? "selected" : ""}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`).join("")}
+            ${[o.status, ...(STATUS_TRANSITIONS[o.status] || [])].map((s) => `<option value="${s}" ${s === o.status ? "selected" : ""}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`).join("")}
           </select>
         </td>
         <td style="text-align:right;">
+          ${o.payment?.status === "submitted" ? `<button type="button" class="btn-row-edit verify-payment-btn" data-id="${o.id}">Verify Payment</button>` : ""}
           <a href="order-detail.html?id=${o.id}" class="btn-row-edit">View</a>
         </td>
       </tr>
     `
       )
       .join("");
+
+    el.querySelectorAll(".verify-payment-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        btn.disabled = true;
+        try { await api.post(`/admin/orders/${btn.dataset.id}/verify-payment/`); loadOrders(); }
+        catch { btn.disabled = false; }
+      });
+    });
 
     el.querySelectorAll(".status-select").forEach((sel) => {
       sel.addEventListener("change", async () => {
