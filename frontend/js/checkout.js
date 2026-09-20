@@ -35,7 +35,7 @@ async function showTotals() {
       <span class="total-amount">${formatPrice(total)}</span>
     </div>
   `;
-  bindPaymentSubmission(order);
+  // Payment UI is bound after the order is created in showOrderSuccess().
   document.getElementById("printNormalReceiptBtn")?.addEventListener("click", () => printReceipt(order, "normal"));
   document.getElementById("printPosReceiptBtn")?.addEventListener("click", () => printReceipt(order, "pos"));
   document.getElementById("downloadReceiptBtn")?.addEventListener("click", () => downloadReceipt(order, "normal"));
