@@ -64,6 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 ${o.payment?.status === "verified" ? `<div class="order-payment-prompt is-verified"><strong>Payment verified</strong><span>Your bKash payment has been verified.</span></div>` : ""}
                 ${o.status === "pending" ? `<button type="button" class="btn-outline cancel-order-btn" data-order-id="${o.id}">Cancel Order</button>` : ""}
                 <button type="button" class="btn-outline receipt-btn" data-order-id="${o.id}">Receipt</button>
+                <button type="button" class="btn-outline download-receipt-btn" data-order-id="${o.id}">Download PDF</button>
               </div>
             `
                     )
