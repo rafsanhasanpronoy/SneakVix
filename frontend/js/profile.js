@@ -58,7 +58,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
                 <span class="order-status ${o.status}">${o.status}</span>
                 <span class="order-amt">${formatPrice(o.total_amount)}</span>
-                ${o.status === "pending" && !o.payment ? `<button type="button" class="btn-outline submit-payment-btn" data-order-id="${o.id}" data-amount="${o.total_amount}">Submit bKash Payment</button>` : ""}\n                ${o.payment?.status === "submitted" ? `<span class="order-payment-note">Payment submitted — awaiting verification</span>` : ""}\n                ${o.payment?.status === "verified" ? `<span class="order-payment-note">Payment verified</span>` : ""}\n                ${o.status === "pending" ? `<button type="button" class="btn-outline cancel-order-btn" data-order-id="${o.id}">Cancel Order</button>` : ""}
+                ${o.status === "pending" && !o.payment ? `<div class="order-payment-prompt"><strong>Awaiting payment</strong><span>Pay ${formatPrice(o.total_amount)} via bKash, then submit the transaction ID.</span><button type="button" class="btn-outline submit-payment-btn" data-order-id="${o.id}" data-amount="${o.total_amount}">Submit bKash Payment</button></div>` : ""}
+                ${o.payment?.status === "submitted" ? `<div class="order-payment-prompt is-submitted"><strong>Payment submitted</strong><span>Transaction ID received. Waiting for admin verification.</span></div>` : ""}
+                ${o.payment?.status === "rejected" ? `<div class="order-payment-prompt is-rejected"><strong>Payment needs attention</strong><span>Please check your bKash payment details and submit a new transaction ID.</span><button type="button" class="btn-outline submit-payment-btn" data-order-id="${o.id}" data-amount="${o.total_amount}">Submit Payment Again</button></div>` : ""}
+                ${o.payment?.status === "verified" ? `<div class="order-payment-prompt is-verified"><strong>Payment verified</strong><span>Your bKash payment has been verified.</span></div>` : ""}
+                ${o.status === "pending" ? `<button type="button" class="btn-outline cancel-order-btn" data-order-id="${o.id}">Cancel Order</button>` : ""}
                 <button type="button" class="btn-outline receipt-btn" data-order-id="${o.id}">Receipt</button>
               </div>
             `
@@ -101,10 +105,15 @@ document.addEventListener("DOMContentLoaded", async () => {
           <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999;">
             <div style="width:min(460px,100%);background:var(--card-bg,#171717);padding:24px;border-radius:14px;">
               <h3 style="margin-top:0;">Submit bKash Payment</h3>
-              <p style="color:var(--text-light,#aaa);">Pay the exact order amount through bKash, then enter the transaction ID below.</p>
-              <p><strong>Amount: ${formatPrice(amount)}</strong></p>
+              <div class="profile-payment-steps">
+                <div><strong>1. Pay first</strong><span>Send exactly ${formatPrice(amount)} via bKash to the store number shown at checkout.</span></div>
+                <div><strong>2. Get your Transaction ID</strong><span>After a successful payment, copy the Transaction ID from bKash.</span></div>
+                <div><strong>3. Submit it here</strong><span>Enter the Transaction ID below. Do not submit it before payment is completed.</span></div>
+              </div>
+              <p><strong>Order amount: ${formatPrice(amount)}</strong></p>
               <form id="profilePaymentForm">
-                <input name="reference" class="form-input" required minlength="4" maxlength="100" placeholder="bKash Transaction ID / Reference" autocomplete="off">
+                <label class="form-label" for="profilePaymentReference">bKash Transaction ID</label>
+                <input id="profilePaymentReference" name="reference" class="form-input" required minlength="4" maxlength="100" placeholder="e.g. 8A1B2C3D" autocomplete="off">
                 <input type="hidden" name="amount" value="${amount}">
                 <div style="display:flex;gap:10px;margin-top:14px;">
                   <button type="button" class="btn-outline" id="closeProfilePayment">Cancel</button>
