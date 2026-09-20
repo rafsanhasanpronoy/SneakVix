@@ -1668,3 +1668,32 @@ button, input, select, textarea { max-width: 100%; }
         margin-top: 0.2rem;
     }
 }
+
+/* ==================== CHECKOUT UX ==================== */
+.checkout-progress { display:flex; align-items:center; gap:.55rem; margin:1.2rem 0 2rem; }
+.checkout-progress-step { display:flex; align-items:center; gap:.45rem; color:var(--text-light); font-size:.78rem; white-space:nowrap; }
+.checkout-progress-step span { width:28px; height:28px; display:grid; place-items:center; border:1px solid var(--card-border); border-radius:50%; font-weight:700; }
+.checkout-progress-step.is-complete span, .checkout-progress-step.is-active span { background:var(--primary); color:var(--on-primary); border-color:var(--primary); }
+.checkout-progress-step.is-active { color:var(--text); }
+.checkout-progress-line { height:1px; flex:1; background:var(--card-border); min-width:18px; }
+.checkout-progress-line.is-complete { background:var(--primary); }
+.discount-value { color:var(--success); }
+.success-actions { display:flex; gap:.75rem; justify-content:center; flex-wrap:wrap; }
+
+/* ==================== PRODUCT UX ==================== */
+.stock-badge.low-stock { background:rgba(255,193,7,.12); color:var(--warning); border-color:rgba(255,193,7,.3); }
+.thumb-strip { display:flex; gap:.7rem; margin-top:.8rem; overflow-x:auto; }
+.thumb-strip .thumb { width:72px; height:72px; object-fit:contain; background:var(--img-bg); border:2px solid transparent; border-radius:10px; padding:4px; cursor:pointer; flex:0 0 auto; }
+.thumb-strip .thumb:hover, .thumb-strip .thumb.active { border-color:var(--primary); }
+.product-hero-img { border-radius:var(--border-radius); overflow:hidden; background:var(--img-bg); }
+
+/* ==================== APPLIED FILTERS ==================== */
+.applied-filters { display:flex; align-items:center; gap:.7rem; flex-wrap:wrap; margin:-.7rem 0 1.2rem; }
+.applied-filters-label { font-size:.76rem; font-weight:700; color:var(--text-light); text-transform:uppercase; letter-spacing:.06em; }
+.applied-filter-list { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.applied-filter, .clear-applied-filters { border:1px solid var(--card-border); border-radius:999px; padding:.4rem .7rem; background:var(--card); color:var(--text); cursor:pointer; font:inherit; font-size:.78rem; }
+.applied-filter span { color:var(--text-light); margin-left:.2rem; }
+.applied-filter:hover { border-color:var(--primary); color:var(--primary); }
+.clear-applied-filters { color:var(--primary); border-color:var(--primary); background:transparent; font-weight:700; }
+.clear-applied-filters:hover { background:var(--primary); color:var(--on-primary); }
+@media (max-width:600px) { .checkout-progress { gap:.25rem; } .checkout-progress-step strong { display:none; } .checkout-progress-line { min-width:10px; } .checkout-progress-step span { width:26px; height:26px; } .applied-filters { align-items:flex-start; flex-direction:column; } }
