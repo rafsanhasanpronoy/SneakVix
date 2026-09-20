@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from rest_framework import serializers
 
-from .models import Cart, Order, OrderAddress, OrderItem, Product, ProductSize
+from .models import Cart, Order, OrderAddress, OrderItem, Payment, Product, ProductSize
 
 User = get_user_model()
 
@@ -100,13 +100,21 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ["id", "product", "product_name", "product_image", "size", "quantity", "unit_price"]
 
 
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ["reference", "amount", "status", "submitted_at", "verified_at"]
+        read_only_fields = ["status", "submitted_at", "verified_at"]
+
+
 class OrderSerializer(serializers.ModelSerializer):
     address = OrderAddressSerializer(read_only=True)
     items = OrderItemSerializer(many=True, read_only=True)
+    payment = PaymentSerializer(read_only=True)
 
     class Meta:
         model = Order
-        fields = ["id", "total_amount", "status", "created_at", "updated_at", "address", "items"]
+        fields = ["id", "total_amount", "status", "created_at", "updated_at", "address", "items", "payment"]
 
 
 class CheckoutSerializer(serializers.Serializer):
@@ -119,3 +127,7 @@ class CheckoutSerializer(serializers.Serializer):
     address_line2 = serializers.CharField(max_length=255, required=False, allow_blank=True)
     city = serializers.CharField(max_length=100)
     postal_code = serializers.CharField(max_length=20, required=False, allow_blank=True)
+
+class PaymentSubmitSerializer(serializers.Serializer):
+    reference = serializers.CharField(min_length=4, max_length=100, trim_whitespace=True)
+    amount = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0.01)
