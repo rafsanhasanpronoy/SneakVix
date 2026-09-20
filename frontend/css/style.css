@@ -1754,3 +1754,14 @@ button, input, select, textarea { max-width: 100%; }
 .payment-submit-form { display:flex; flex-direction:column; gap:.7rem; margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(128,128,128,.15); }
 .payment-submit-form label { font-weight:700; font-size:.86rem; }
 .payment-submit-success { padding:.7rem .85rem; border-radius:8px; background:rgba(40,167,69,.1); color:var(--success); font-size:.85rem; }
+
+
+@media (max-width: 860px) {
+    .profile-sidebar {
+        position: static;
+        top: auto;
+    }
+    .profile-layout {
+        gap: 1.25rem;
+    }
+}
