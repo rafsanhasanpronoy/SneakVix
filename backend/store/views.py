@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Cart, Order, OrderAddress, OrderItem, Product, ProductSize
+from .models import Cart, Order, OrderAddress, OrderItem, Payment, Product, ProductSize
 from .emails import BKASH_NUMBER, send_order_confirmation_email, send_order_status_email
 from .serializers import (
     CartItemSerializer, CheckoutSerializer, OrderSerializer,
@@ -240,8 +240,7 @@ class SubmitPaymentView(APIView):
         try:
             with transaction.atomic():
                 payment = Payment.objects.create(order=order, reference=data["reference"], amount=data["amount"])
-                order.status = "paid"
-                order.save(update_fields=["status", "updated_at"])
+
         except IntegrityError:
             return Response({"error": "This payment reference has already been used."}, status=409)
         return Response(PaymentSerializer(payment).data, status=201)
@@ -269,11 +268,8 @@ class CancelOrderView(APIView):
     def post(self, request, order_id):
         order = get_object_or_404(Order, id=order_id, user=request.user)
 
-        if order.status != "pending":
-            return Response(
-                {"error": "This order cannot be cancelled."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        if order.status != "pending" or hasattr(order, "payment"):
+            return Response({"error": "This order cannot be cancelled after payment submission."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             items = list(order.items.select_related("product"))
