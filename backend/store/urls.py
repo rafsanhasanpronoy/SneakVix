@@ -18,6 +18,8 @@ urlpatterns = [
     path("checkout/", views.CheckoutView.as_view()),
     path("orders/", views.OrderListView.as_view()),
     path("orders/<int:order_id>/cancel/", views.CancelOrderView.as_view()),
+    path("orders/<int:order_id>/payment/", views.SubmitPaymentView.as_view()),
+    path("admin/orders/<int:order_id>/verify-payment/", views.AdminVerifyPaymentView.as_view()),
     path("image-search/", views.ImageSearchView.as_view()),
     path("", include(router.urls)),
 ]
