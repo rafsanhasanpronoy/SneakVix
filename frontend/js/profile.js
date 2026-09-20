@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 </div>
                 <span class="order-status ${o.status}">${o.status}</span>
                 <span class="order-amt">${formatPrice(o.total_amount)}</span>
-                ${o.status === "pending" ? `<button type="button" class="btn-outline cancel-order-btn" data-order-id="${o.id}">Cancel Order</button>` : ""}
+                ${o.status === "pending" && !o.payment ? `<button type="button" class="btn-outline submit-payment-btn" data-order-id="${o.id}" data-amount="${o.total_amount}">Submit bKash Payment</button>` : ""}\n                ${o.payment?.status === "submitted" ? `<span class="order-payment-note">Payment submitted — awaiting verification</span>` : ""}\n                ${o.payment?.status === "verified" ? `<span class="order-payment-note">Payment verified</span>` : ""}\n                ${o.status === "pending" ? `<button type="button" class="btn-outline cancel-order-btn" data-order-id="${o.id}">Cancel Order</button>` : ""}
                 <button type="button" class="btn-outline receipt-btn" data-order-id="${o.id}">Receipt</button>
               </div>
             `
@@ -78,6 +78,53 @@ document.addEventListener("DOMContentLoaded", async () => {
           return;
         }
         printReceipt(order, "normal");
+      });
+    });
+
+    document.querySelectorAll(".submit-payment-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const amount = Number(button.dataset.amount);
+        const existing = document.getElementById("profilePaymentModal");
+        if (existing) existing.remove();
+        const modal = document.createElement("div");
+        modal.id = "profilePaymentModal";
+        modal.innerHTML = `
+          <div style="position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:20px;z-index:9999;">
+            <div style="width:min(460px,100%);background:var(--card-bg,#171717);padding:24px;border-radius:14px;">
+              <h3 style="margin-top:0;">Submit bKash Payment</h3>
+              <p style="color:var(--text-light,#aaa);">Pay the exact order amount through bKash, then enter the transaction ID below.</p>
+              <p><strong>Amount: ${formatPrice(amount)}</strong></p>
+              <form id="profilePaymentForm">
+                <input name="reference" class="form-input" required minlength="4" maxlength="100" placeholder="bKash Transaction ID / Reference" autocomplete="off">
+                <input type="hidden" name="amount" value="${amount}">
+                <div style="display:flex;gap:10px;margin-top:14px;">
+                  <button type="button" class="btn-outline" id="closeProfilePayment">Cancel</button>
+                  <button type="submit" class="btn btn-primary">Submit Payment</button>
+                </div>
+                <div id="profilePaymentError" class="error" style="display:none;margin-top:10px;"></div>
+              </form>
+            </div>
+          </div>`;
+        document.body.appendChild(modal);
+        document.getElementById("closeProfilePayment").onclick = () => modal.remove();
+        document.getElementById("profilePaymentForm").addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const submit = e.target.querySelector('button[type="submit"]');
+          const error = document.getElementById("profilePaymentError");
+          submit.disabled = true;
+          error.style.display = "none";
+          try {
+            const data = Object.fromEntries(new FormData(e.target).entries());
+            data.amount = Number(data.amount);
+            await api.post(`/orders/${button.dataset.orderId}/payment/`, data);
+            modal.remove();
+            window.location.reload();
+          } catch (err) {
+            error.innerHTML = formatApiError(err.data || { error: err.message || "Could not submit payment." });
+            error.style.display = "block";
+            submit.disabled = false;
+          }
+        });
       });
     });
 
