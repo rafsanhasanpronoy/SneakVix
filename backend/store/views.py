@@ -254,11 +254,14 @@ class AdminVerifyPaymentView(APIView):
         payment = getattr(order, "payment", None)
         if not payment or payment.status != "submitted":
             return Response({"error": "There is no pending payment to verify."}, status=400)
-        if order.status != "paid":
-            return Response({"error": "This order is not in a payable state."}, status=400)
-        payment.status = "verified"
-        payment.verified_at = timezone.now()
-        payment.save(update_fields=["status", "verified_at"])
+        if order.status != "pending":
+            return Response({"error": "This order is no longer awaiting payment verification."}, status=400)
+        with transaction.atomic():
+            payment.status = "verified"
+            payment.verified_at = timezone.now()
+            payment.save(update_fields=["status", "verified_at"])
+            order.status = "paid"
+            order.save(update_fields=["status", "updated_at"])
         return Response(OrderSerializer(order).data)
 
 
