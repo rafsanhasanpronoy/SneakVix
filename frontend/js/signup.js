@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = next;
     } catch (err) {
       const data = err.data || {};
-      errorEl.textContent = Object.values(data).flat().join(" ") || "Could not sign up.";
+      errorEl.innerHTML = formatApiError(data || { error: err.message || "Could not sign up." });;
     }
   });
 });
