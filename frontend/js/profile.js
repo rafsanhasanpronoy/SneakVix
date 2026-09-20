@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           <div class="profile-avatar">${initial}</div>
           <div class="profile-name">${user?.username || ""}</div>
           <div class="profile-email">${user?.email || ""}</div>
+          <div class="profile-account-label">Customer Account</div>
           <ul class="profile-nav">
             <li><a class="active"><span class="nav-icon">&#128100;</span> Account</a></li>
             <li><a><span class="nav-icon">&#128230;</span> Orders</a></li>
@@ -43,7 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           </div>
 
           <div class="profile-main-card">
-            <div class="profile-card-title">Order history</div>
+            <div class="profile-card-heading"><div><div class="profile-card-title">Order history</div><div class="profile-card-subtitle">View your orders, payment status and receipts.</div></div><span class="profile-order-count">${orders.length} ${orders.length === 1 ? "order" : "orders"}</span></div>
             ${
               orders.length === 0
                 ? `<p style="color:var(--text-light);">No orders yet.</p>`
@@ -70,6 +71,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     `;
 
     
+    document.querySelectorAll(".download-receipt-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const order = orders.find((item) => String(item.id) === String(button.dataset.orderId));
+        if (!order) { window.alert("Could not load the receipt."); return; }
+        downloadReceipt(order, "normal");
+      });
+    });
+
     document.querySelectorAll(".receipt-btn").forEach((button) => {
       button.addEventListener("click", () => {
         const order = orders.find((item) => String(item.id) === String(button.dataset.orderId));
