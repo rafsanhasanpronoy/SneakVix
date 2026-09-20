@@ -69,6 +69,7 @@ class Order(models.Model):
         ("shipped", "Shipped"),
         ("delivered", "Delivered"),
         ("cancelled", "Cancelled"),
+        ("refunded", "Refunded"),
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="orders")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -103,3 +104,20 @@ class OrderItem(models.Model):
 
     class Meta:
         db_table = "order_items"
+
+
+class Payment(models.Model):
+    STATUS_CHOICES = [
+        ("submitted", "Submitted"),
+        ("verified", "Verified"),
+        ("rejected", "Rejected"),
+    ]
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="payment")
+    reference = models.CharField(max_length=100, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="submitted")
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        db_table = "payments"
