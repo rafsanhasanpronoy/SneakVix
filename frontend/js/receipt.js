@@ -12,7 +12,7 @@ function receiptHtml(order, mode) {
   const orderNo = "#" + String(order.id).padStart(6, "0");
   const created = order.created_at ? new Date(order.created_at).toLocaleString() : new Date().toLocaleString();
   const pos = mode === "pos";
-  const logoUrl = "https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo.png";
+  const logoUrl = "https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo-light.png";
 
   const itemRows = d.items.map(function (item) {
     const qty = Number(item.quantity || 0);
