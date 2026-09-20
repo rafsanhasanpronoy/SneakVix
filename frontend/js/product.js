@@ -115,9 +115,10 @@ function render() {
 
 function stockBadgeHtml(sizes) {
   const inStock = sizes.some((s) => s.stock > 0);
-  return inStock
-    ? `<span class="stock-badge in-stock">In Stock</span>`
-    : `<span class="stock-badge out-of-stock">Out of Stock</span>`;
+  if (!inStock) return `<span class="stock-badge out-of-stock">Out of Stock</span>`;
+  const totalStock = sizes.reduce((sum, s) => sum + Number(s.stock || 0), 0);
+  if (totalStock <= 5) return `<span class="stock-badge low-stock">Only ${totalStock} left</span>`;
+  return `<span class="stock-badge in-stock">In Stock</span>`;
 }
 
 function sizeRowHtml(s) {
