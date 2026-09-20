@@ -151,12 +151,12 @@ class CartViewSet(viewsets.ModelViewSet):
         product = get_object_or_404(Product, id=product_id)
         ps = ProductSize.objects.filter(product=product, size=size).first()
         if not ps or ps.stock < 1:
-            return Response({"error": "Selected size is out of stock"}, status=400)
+            return Response({"error": "Product is out of stock."}, status=400)
 
         item, created = Cart.objects.get_or_create(user=request.user, product=product, size=size, defaults={"quantity": 1})
         if not created:
             if item.quantity >= ps.stock:
-                return Response({"error": f"Only {ps.stock} item(s) available for size {size}."}, status=400)
+                return Response({"error": f"Only {ps.stock} items are available."}, status=400)
             item.quantity += 1
             item.save(update_fields=["quantity"])
         return Response(CartItemSerializer(item).data, status=201)
@@ -234,7 +234,7 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         new_status = request.data.get("status")
         valid = dict(Order.STATUS_CHOICES)
         if new_status not in valid:
-            return Response({"error": "Invalid status"}, status=400)
+            return Response({"error": "This order cannot be moved to that status."}, status=400)
         order.status = new_status
         order.save(update_fields=["status", "updated_at"])
         try:
