@@ -9,6 +9,7 @@ const STATUS_BADGE = {
   shipped: "badge-shipped",
   delivered: "badge-delivered",
   cancelled: "badge-cancelled",
+  refunded: "badge-refunded",
 };
 
 function getState() {
