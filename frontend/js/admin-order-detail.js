@@ -1,6 +1,6 @@
 // admin-order-detail.js — full view of a single order: customer/shipping
 // info, line items, computed totals, and a status control.
-const STATUSES = ["pending", "paid", "processing", "shipped", "delivered", "cancelled"];
+const STATUSES = ["pending", "paid", "processing", "shipped", "delivered", "cancelled", "refunded"];
 const STATUS_BADGE = {
   pending: "badge-pending",
   paid: "badge-paid",
@@ -8,6 +8,7 @@ const STATUS_BADGE = {
   shipped: "badge-shipped",
   delivered: "badge-delivered",
   cancelled: "badge-cancelled",
+  refunded: "badge-refunded",
 };
 
 const orderId = new URLSearchParams(window.location.search).get("id");
@@ -56,6 +57,19 @@ function render(o) {
             Placed ${new Date(o.created_at).toLocaleString()}${o.updated_at ? ` &middot; Updated ${new Date(o.updated_at).toLocaleString()}` : ""}
           </span>
         </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-header-label">Payment</span></div>
+        <div style="padding:20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;">
+          <div><span class="form-label">Method</span><div>bKash</div></div>
+          <div><span class="form-label">Status</span><div>${o.payment?.status ? o.payment.status.charAt(0).toUpperCase() + o.payment.status.slice(1) : "Awaiting Payment"}</div></div>
+          <div><span class="form-label">Transaction ID</span><div class="mono-input">${escapeHtml(o.payment?.reference || "—")}</div></div>
+          <div><span class="form-label">Submitted amount</span><div>${o.payment ? formatPrice(o.payment.amount) : "—"}</div></div>
+          <div><span class="form-label">Submitted at</span><div>${o.payment?.submitted_at ? new Date(o.payment.submitted_at).toLocaleString() : "—"}</div></div>
+          <div><span class="form-label">Verified at</span><div>${o.payment?.verified_at ? new Date(o.payment.verified_at).toLocaleString() : "—"}</div></div>
+        </div>
+        ${o.payment?.status === "submitted" ? `<div style="padding:0 20px 20px;"><button type="button" id="verifyPaymentBtn" class="btn btn-primary">Verify Payment</button></div>` : ""}
       </div>
 
       <div class="card">
@@ -110,6 +124,19 @@ function render(o) {
 
     </div>
   `;
+
+  document.getElementById("verifyPaymentBtn")?.addEventListener("click", async (e) => {
+    if (!window.confirm("Have you checked the bKash transaction/reference and payment amount?")) return;
+    e.target.disabled = true;
+    try {
+      await api.post("/admin/orders/" + o.id + "/verify-payment/");
+      showAlert("Payment verified and order marked as paid.", "success");
+      loadOrder();
+    } catch (err) {
+      showAlert(err.data?.error || "Could not verify payment.", "error");
+      e.target.disabled = false;
+    }
+  });
 
   document.getElementById("statusSelect").addEventListener("change", async (e) => {
     const newStatus = e.target.value;
