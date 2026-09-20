@@ -56,7 +56,7 @@ function renderNav() {
     <header>
       <div class="container header-flex">
         <a href="${escapeHtml(base)}index.html" class="logo">
-          <img class="logo-dark" src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo-light.png" alt="SneakVix" />
+          <img class="logo-dark" src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo.png" alt="SneakVix" />
           <img class="logo-light" src="https://gargfwngcvmoggilbvfl.supabase.co/storage/v1/object/public/sneaker/logo-light.png" alt="SneakVix" />
         </a>
         <button class="mobile-menu-toggle" id="mobileMenuToggle" type="button" aria-label="Open navigation menu" aria-expanded="false">
