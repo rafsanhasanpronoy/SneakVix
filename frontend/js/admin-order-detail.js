@@ -69,7 +69,7 @@ function render(o) {
           <div><span class="form-label">Submitted at</span><div>${o.payment?.submitted_at ? new Date(o.payment.submitted_at).toLocaleString() : "—"}</div></div>
           <div><span class="form-label">Verified at</span><div>${o.payment?.verified_at ? new Date(o.payment.verified_at).toLocaleString() : "—"}</div></div>
         </div>
-        ${o.payment?.status === "submitted" ? `<div style="padding:0 20px 20px;"><button type="button" id="verifyPaymentBtn" class="btn btn-primary">Verify Payment</button></div>` : ""}
+        ${o.payment?.status === "submitted" ? `<div style="padding:0 20px 20px;display:flex;gap:10px;flex-wrap:wrap;"><button type="button" id="verifyPaymentBtn" class="btn btn-primary">Verify Payment</button><button type="button" id="rejectPaymentBtn" class="btn btn-outline">Reject Payment</button></div>` : ""}
       </div>
 
       <div class="card">
@@ -134,6 +134,19 @@ function render(o) {
       loadOrder();
     } catch (err) {
       showAlert(err.data?.error || "Could not verify payment.", "error");
+      e.target.disabled = false;
+    }
+  });
+
+  document.getElementById("rejectPaymentBtn")?.addEventListener("click", async (e) => {
+    if (!window.confirm("Reject this bKash payment? The customer will be able to submit a new transaction ID.")) return;
+    e.target.disabled = true;
+    try {
+      await api.post("/admin/orders/" + o.id + "/reject-payment/");
+      showAlert("Payment rejected. The customer can submit a new transaction ID.", "success");
+      loadOrder();
+    } catch (err) {
+      showAlert(err.data?.error || "Could not reject payment.", "error");
       e.target.disabled = false;
     }
   });
