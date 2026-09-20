@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
       showOrderSuccess(order);
     } catch (err) {
       const data = err.data || {};
-      errorEl.textContent = Object.values(data).flat().join(" ") || "Something went wrong.";
+      errorEl.innerHTML = formatApiError(data || { error: err.message || "Something went wrong." });
       placeOrderBtn.disabled = false;
       placeOrderBtn.innerHTML = originalLabel;
     }
