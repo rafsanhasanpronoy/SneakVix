@@ -133,6 +133,13 @@ class ProductViewSet(viewsets.ModelViewSet):
                     ProductSize.objects.create(product=product, size=size, stock=stock)
             removed_sizes = set(existing) - set(incoming)
             if removed_sizes:
+                active_statuses = {"pending", "paid", "processing", "shipped"}
+                if OrderItem.objects.filter(
+                    product=product,
+                    size__in=removed_sizes,
+                    order__status__in=active_statuses,
+                ).exists():
+                    raise ValidationError({"sizes": "A size cannot be removed while it is used by an active order."})
                 ProductSize.objects.filter(product=product, size__in=removed_sizes).delete()
 
     def destroy(self, request, *args, **kwargs):
@@ -267,6 +274,10 @@ class AdminVerifyPaymentView(APIView):
             payment.save(update_fields=["status", "verified_at"])
             order.status = "paid"
             order.save(update_fields=["status", "updated_at"])
+        try:
+            send_order_status_email(order, "paid")
+        except Exception:
+            logger.exception("Payment verification email failed for order %s", order.id)
         return Response(OrderSerializer(order).data)
 
 
