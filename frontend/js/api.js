@@ -164,16 +164,34 @@ function productCardHtml(p) {
 
 const GUEST_CART_KEY = "sneakvix-guest-cart";
 
+function normalizeGuestCart(items) {
+  if (!Array.isArray(items)) return [];
+  const merged = new Map();
+  items.forEach((item) => {
+    const productId = Number(item?.product_id);
+    const size = Number(item?.size);
+    const quantity = Math.floor(Number(item?.quantity));
+    if (!Number.isInteger(productId) || productId <= 0 || !Number.isFinite(size) || size <= 0 || !Number.isInteger(quantity) || quantity <= 0) return;
+    const key = productId + ":" + size;
+    const existing = merged.get(key);
+    if (existing) existing.quantity += quantity;
+    else merged.set(key, { product_id: productId, size, quantity });
+  });
+  return Array.from(merged.values());
+}
+
 function getGuestCart() {
   try {
-    return JSON.parse(localStorage.getItem(GUEST_CART_KEY)) || [];
+    return normalizeGuestCart(JSON.parse(localStorage.getItem(GUEST_CART_KEY)));
   } catch {
     return [];
   }
 }
 
 function saveGuestCart(items) {
-  localStorage.setItem(GUEST_CART_KEY, JSON.stringify(items));
+  const normalized = normalizeGuestCart(items);
+  if (normalized.length) localStorage.setItem(GUEST_CART_KEY, JSON.stringify(normalized));
+  else localStorage.removeItem(GUEST_CART_KEY);
 }
 
 function addToGuestCart(productId, size, qty = 1) {
@@ -203,6 +221,20 @@ async function mergeGuestCartIntoServerCart() {
   const remaining = [];
   for (const item of items) {
     let mergedQuantity = 0;
+    let invalidProduct = false;
+
+    try {
+      const product = await api.get("/products/" + encodeURIComponent(item.product_id));
+      const sizeRow = (product.sizes || []).find((s) => Number(s.size) === Number(item.size));
+      if (!sizeRow) {
+        invalidProduct = true;
+      }
+    } catch {
+      invalidProduct = true;
+    }
+
+    if (invalidProduct) continue;
+
     for (let i = 0; i < item.quantity; i++) {
       try {
         await api.post("/cart/", { product_id: item.product_id, size: item.size });
@@ -213,13 +245,10 @@ async function mergeGuestCartIntoServerCart() {
     }
 
     const unmergedQuantity = item.quantity - mergedQuantity;
-    if (unmergedQuantity > 0) {
-      remaining.push({ ...item, quantity: unmergedQuantity });
-    }
+    if (unmergedQuantity > 0) remaining.push({ ...item, quantity: unmergedQuantity });
   }
 
-  if (remaining.length) saveGuestCart(remaining);
-  else clearGuestCart();
+  saveGuestCart(remaining);
 }
 
 // Unified cart fetch — works for both logged-in (server /cart/) and guest
