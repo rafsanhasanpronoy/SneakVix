@@ -16,7 +16,7 @@ const orderId = new URLSearchParams(window.location.search).get("id");
 document.addEventListener("DOMContentLoaded", loadOrder);
 
 function showAlert(message, type) {
-  document.getElementById("alertBox").innerHTML = `<div class="alert-${type}">${message}</div>`;
+  document.getElementById("alertBox").innerHTML = `<div class="alert-${type}">${escapeHtml(message)}</div>`;
 }
 
 async function loadOrder() {
@@ -75,11 +75,11 @@ function render(o) {
       <div class="card">
         <div class="card-header"><span class="card-header-label">Shipping Address</span></div>
         <div class="admin-shipping-grid" style="padding:20px;">
-          <div><span class="form-label">Full name</span><div>${a.full_name || "—"}</div></div>
-          <div><span class="form-label">Phone</span><div>${a.phone || "—"}</div></div>
-          <div><span class="form-label">Address</span><div>${a.address_line1 || ""}${a.address_line2 ? `, ${a.address_line2}` : ""}</div></div>
-          <div><span class="form-label">City</span><div>${a.city || "—"}</div></div>
-          <div><span class="form-label">Postal code</span><div>${a.postal_code || "—"}</div></div>
+          <div><span class="form-label">Full name</span><div>${escapeHtml(a.full_name || "—")}</div></div>
+          <div><span class="form-label">Phone</span><div>${escapeHtml(a.phone || "—")}</div></div>
+          <div><span class="form-label">Address</span><div>${escapeHtml(a.address_line1 || "")}${a.address_line2 ? `, ${escapeHtml(a.address_line2)}` : ""}</div></div>
+          <div><span class="form-label">City</span><div>${escapeHtml(a.city || "—")}</div></div>
+          <div><span class="form-label">Postal code</span><div>${escapeHtml(a.postal_code || "—")}</div></div>
         </div>
       </div>
 
@@ -94,7 +94,7 @@ function render(o) {
                   (i) => `
                 <tr>
                   <td style="display:flex;align-items:center;gap:10px;">
-                    <img class="data-thumb" src="${mediaUrl(i.product_image)}" alt="${i.product_name}" />
+                    <img class="data-thumb" src="${mediaUrl(i.product_image)}" alt="${escapeHtml(i.product_name)}" />
                     ${i.product_name}
                   </td>
                   <td>EU ${i.size}</td>
