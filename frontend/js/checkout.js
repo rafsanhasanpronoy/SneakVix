@@ -10,7 +10,8 @@ async function showTotals() {
   }
 
   const subtotal = items.reduce((sum, i) => sum + Number(i.product_price) * i.quantity, 0);
-  const total = subtotal + DELIVERY_CHARGE;
+  const discount = 0;
+  const total = subtotal + DELIVERY_CHARGE - discount;
 
   document.getElementById("summaryItems").innerHTML = items
     .map(
@@ -27,6 +28,7 @@ async function showTotals() {
   document.getElementById("totals").innerHTML = `
     <div class="summary-row"><span>Subtotal</span><strong>${formatPrice(subtotal)}</strong></div>
     <div class="summary-row"><span>Delivery</span><strong>${formatPrice(DELIVERY_CHARGE)}</strong></div>
+    <div class="summary-row"><span>Discount</span><strong class="discount-value">${discount ? "- " + formatPrice(discount) : formatPrice(0)}</strong></div>
     <hr class="summary-divider" />
     <div class="summary-total-row">
       <span>Total</span>
