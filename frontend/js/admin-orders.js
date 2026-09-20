@@ -64,15 +64,15 @@ async function loadOrders(pushHistory = false) {
       <tr>
         <td><span class="mono-input" style="font-size:12px;color:#bbb;">#${String(o.id).padStart(4, "0")}</span></td>
         <td style="font-weight:500;">
-          ${o.address?.full_name || "—"}
-          <div style="font-size:11.5px;color:#bbb;">${o.address?.city || ""}</div>
+          ${escapeHtml(o.address?.full_name || "—")}
+          <div style="font-size:11.5px;color:#bbb;">${escapeHtml(o.address?.city || "")}</div>
         </td>
         <td class="mono-input" style="font-size:13px;color:var(--admin-accent);font-weight:700;">${formatPrice(o.total_amount)}</td>
         <td><span class="badge ${STATUS_BADGE[o.status] || ""}">${o.status.charAt(0).toUpperCase() + o.status.slice(1)}</span></td>
         <td>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <span class="badge ${paymentClass}">${paymentLabel}</span>
-            ${paymentStatus === "submitted" ? `<button type="button" class="btn-row-edit verify-payment-btn" data-id="${o.id}">Verify Payment</button>` : ""}
+            ${paymentStatus === "submitted" ? `<button type="button" class="btn-row-edit verify-payment-btn" data-id="${o.id}">Verify Payment</button><button type="button" class="btn-row-edit reject-payment-btn" data-id="${o.id}">Reject</button>` : ""}
           </div>
         </td>
         <td style="color:#aaa;font-size:13px;">${new Date(o.created_at).toLocaleDateString()}</td>
@@ -90,6 +90,15 @@ async function loadOrders(pushHistory = false) {
         if (!window.confirm("Have you checked the bKash transaction/reference and payment amount?")) return;
         btn.disabled = true;
         try { await api.post(`/admin/orders/${btn.dataset.id}/verify-payment/`); loadOrders(); }
+        catch { btn.disabled = false; }
+      });
+    });
+
+    el.querySelectorAll(".reject-payment-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        if (!window.confirm("Reject this bKash payment? The customer will be able to submit a new transaction ID.")) return;
+        btn.disabled = true;
+        try { await api.post(`/admin/orders/${btn.dataset.id}/reject-payment/`); loadOrders(); }
         catch { btn.disabled = false; }
       });
     });
