@@ -276,10 +276,10 @@ class CancelOrderView(APIView):
     def post(self, request, order_id):
         order = get_object_or_404(Order, id=order_id, user=request.user)
 
-        if order.status != "pending" or hasattr(order, "payment"):
-            return Response({"error": "This order cannot be cancelled after payment submission."}, status=status.HTTP_400_BAD_REQUEST)
-
         with transaction.atomic():
+            order = Order.objects.select_for_update().get(pk=order.pk)
+            if order.status != "pending" or hasattr(order, "payment"):
+                return Response({"error": "This order cannot be cancelled after payment submission."}, status=status.HTTP_400_BAD_REQUEST)
             items = list(order.items.select_related("product"))
             for item in items:
                 ProductSize.objects.filter(
@@ -334,7 +334,12 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
             if not payment or payment.status != "verified":
                 return Response({"error": "Payment must be verified before the order can be marked paid."}, status=400)
         if new_status == "cancelled":
+            if hasattr(order, "payment"):
+                return Response({"error": "A payment has already been submitted for this order."}, status=400)
             with transaction.atomic():
+                order = Order.objects.select_for_update().get(pk=order.pk)
+                if order.status != "pending":
+                    return Response({"error": "This order is no longer pending."}, status=400)
                 for item in order.items.all():
                     ProductSize.objects.filter(product=item.product, size=item.size).update(stock=F("stock") + item.quantity)
                 order.status = new_status
