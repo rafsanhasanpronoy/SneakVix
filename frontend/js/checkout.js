@@ -36,6 +36,9 @@ async function showTotals() {
     </div>
   `;
   bindPaymentSubmission(order);
+  document.getElementById("printNormalReceiptBtn")?.addEventListener("click", () => printReceipt(order, "normal"));
+  document.getElementById("printPosReceiptBtn")?.addEventListener("click", () => printReceipt(order, "pos"));
+  document.getElementById("downloadReceiptBtn")?.addEventListener("click", () => downloadReceipt(order, "normal"));
 }
 
 function bindPaymentSubmission(order) {
@@ -151,6 +154,9 @@ function showOrderSuccess(order) {
       </p>
 
       <div class="success-actions">
+        <button type="button" class="btn btn-primary large" id="printNormalReceiptBtn">Print Receipt</button>
+        <button type="button" class="btn-outline large" id="printPosReceiptBtn">Print POS Receipt</button>
+        <button type="button" class="btn-outline large" id="downloadReceiptBtn">Download Receipt</button>
         <a href="index.html" class="btn btn-primary large">Continue Shopping</a>
         <a href="profile.html" class="btn-outline large">Track Order</a>
       </div>
