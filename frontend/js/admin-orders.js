@@ -68,17 +68,17 @@ async function loadOrders(pushHistory = false) {
           <div style="font-size:11.5px;color:#bbb;">${escapeHtml(o.address?.city || "")}</div>
         </td>
         <td class="mono-input" style="font-size:13px;color:var(--admin-accent);font-weight:700;">${formatPrice(o.total_amount)}</td>
-        <td><span class="badge ${STATUS_BADGE[o.status] || ""}">${o.status.charAt(0).toUpperCase() + o.status.slice(1)}</span></td>
+        <td><span class="badge ${STATUS_BADGE[o.status] || ""}">${escapeHtml(o.status.charAt(0).toUpperCase() + o.status.slice(1))}</span></td>
         <td>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-            <span class="badge ${paymentClass}">${paymentLabel}</span>
+            <span class="badge ${paymentClass}">${escapeHtml(paymentLabel)}</span>
             ${paymentStatus === "submitted" ? `<button type="button" class="btn-row-edit verify-payment-btn" data-id="${o.id}">Verify Payment</button><button type="button" class="btn-row-edit reject-payment-btn" data-id="${o.id}">Reject</button>` : ""}
           </div>
         </td>
         <td style="color:#aaa;font-size:13px;">${new Date(o.created_at).toLocaleDateString()}</td>
         <td>
           <select class="form-select status-select" data-id="${o.id}" style="width:auto;padding:6px 10px;font-size:12.5px;">
-            ${[o.status, ...(STATUS_TRANSITIONS[o.status] || [])].map((s) => `<option value="${s}" ${s === o.status ? "selected" : ""}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`).join("")}
+            ${[o.status, ...(STATUS_TRANSITIONS[o.status] || [])].map((s) => `<option value="${escapeHtml(s)}" ${s === o.status ? "selected" : ""}>${escapeHtml(s.charAt(0).toUpperCase() + s.slice(1))}</option>`).join("")}
           </select>
         </td>
         <td style="text-align:right;"><a href="order-detail.html?id=${o.id}" class="btn-row-edit">View</a></td>
