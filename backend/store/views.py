@@ -4,8 +4,9 @@ import django_filters
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import F
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters as drf_filters
@@ -21,6 +22,7 @@ from .emails import BKASH_NUMBER, send_order_confirmation_email, send_order_stat
 from .serializers import (
     CartItemSerializer, CheckoutSerializer, OrderSerializer,
     ProductDetailSerializer, ProductListSerializer, SignupSerializer, UserSerializer,
+    PaymentSubmitSerializer, PaymentSerializer,
 )
 
 DELIVERY_CHARGE = 100
@@ -120,8 +122,18 @@ class ProductViewSet(viewsets.ModelViewSet):
         product = serializer.save()
         if sizes is not None:
             sizes = validate_size_rows(sizes)
-            product.sizes.all().delete()
-            ProductSize.objects.bulk_create([ProductSize(product=product, **row) for row in sizes])
+            incoming = {row["size"]: row["stock"] for row in sizes}
+            existing = {ps.size: ps for ps in product.sizes.select_for_update()}
+            for size, stock in incoming.items():
+                if size in existing:
+                    ps = existing[size]
+                    ps.stock = stock
+                    ps.save(update_fields=["stock"])
+                else:
+                    ProductSize.objects.create(product=product, size=size, stock=stock)
+            removed_sizes = set(existing) - set(incoming)
+            if removed_sizes:
+                ProductSize.objects.filter(product=product, size__in=removed_sizes).delete()
 
     def destroy(self, request, *args, **kwargs):
         product = self.get_object()
@@ -211,6 +223,46 @@ class CheckoutView(APIView):
         return Response(response_data, status=201)
 
 
+class SubmitPaymentView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id, user=request.user)
+        if order.status != "pending":
+            return Response({"error": "Payment can only be submitted for a pending order."}, status=400)
+        serializer = PaymentSubmitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        if data["amount"] != order.total_amount:
+            return Response({"error": "Payment amount must exactly match the order total."}, status=400)
+        if Payment.objects.filter(reference__iexact=data["reference"]).exists():
+            return Response({"error": "This payment reference has already been used."}, status=409)
+        try:
+            with transaction.atomic():
+                payment = Payment.objects.create(order=order, reference=data["reference"], amount=data["amount"])
+                order.status = "paid"
+                order.save(update_fields=["status", "updated_at"])
+        except IntegrityError:
+            return Response({"error": "This payment reference has already been used."}, status=409)
+        return Response(PaymentSerializer(payment).data, status=201)
+
+
+class AdminVerifyPaymentView(APIView):
+    permission_classes = [IsAdmin]
+
+    def post(self, request, order_id):
+        order = get_object_or_404(Order, id=order_id)
+        payment = getattr(order, "payment", None)
+        if not payment or payment.status != "submitted":
+            return Response({"error": "There is no pending payment to verify."}, status=400)
+        if order.status != "paid":
+            return Response({"error": "This order is not in a payable state."}, status=400)
+        payment.status = "verified"
+        payment.verified_at = timezone.now()
+        payment.save(update_fields=["status", "verified_at"])
+        return Response(OrderSerializer(order).data)
+
+
 class CancelOrderView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -262,6 +314,28 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         valid = dict(Order.STATUS_CHOICES)
         if new_status not in valid:
             return Response({"error": "This order cannot be moved to that status."}, status=400)
+        transitions = {
+            "pending": {"cancelled", "paid"},
+            "paid": {"refunded", "processing"},
+            "processing": {"shipped"},
+            "shipped": {"delivered"},
+            "delivered": set(),
+            "cancelled": set(),
+            "refunded": set(),
+        }
+        if new_status not in transitions.get(order.status, set()):
+            return Response({"error": f"Cannot move an order from {order.status} to {new_status}."}, status=400)
+        if new_status == "paid":
+            payment = getattr(order, "payment", None)
+            if not payment or payment.status != "verified":
+                return Response({"error": "Payment must be verified before the order can be marked paid."}, status=400)
+        if new_status == "cancelled":
+            with transaction.atomic():
+                for item in order.items.all():
+                    ProductSize.objects.filter(product=item.product, size=item.size).update(stock=F("stock") + item.quantity)
+                order.status = new_status
+                order.save(update_fields=["status", "updated_at"])
+            return Response(OrderSerializer(order).data)
         order.status = new_status
         order.save(update_fields=["status", "updated_at"])
         try:
