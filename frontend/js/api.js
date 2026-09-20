@@ -20,7 +20,9 @@ async function apiRequest(path, { method = "GET", body, auth = true, isForm = fa
   const token = localStorage.getItem("access");
   if (auth && token) headers["Authorization"] = `Bearer ${token}`;
 
-  let res;\n  try {\n    res = await fetch(`${API_BASE}${path}`, {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
     method,
     headers,
     body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
